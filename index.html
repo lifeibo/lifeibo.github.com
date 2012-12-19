@@ -5,11 +5,13 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>李子的博客</title>
+  <title>程序非主流</title>
   <meta name="author" content="lifeibo">
 
   
-  <meta name="description" content="Blog Archives Recent Posts GitHub Repos Status updating&#8230; @lifeibo on GitHub $.domReady(function(){ if (!window.jXHR){ var jxhr = document. &hellip;">
+  <meta name="description" content="我的第一篇文章
+Step5 - 为备份posts做准备
+数据备份很重要，我们可以把文章备份到另一个分支，比如store。在安装完主题后，系统会自动创建一个空目录source/_posts，以后创建的文章都会保存在这个目录内。我们先定位到该目录，然后初始化git（建议新开一个终端窗口， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,13 +20,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://lifeibo.github.com/">
+  <link rel="canonical" href="http://www.lifeibo.com/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
   <script src="/javascripts/ender.js"></script>
   <script src="/javascripts/octopress.js" type="text/javascript"></script>
-  <link href="/atom.xml" rel="alternate" title="李子的博客" type="application/atom+xml">
+  <link href="/atom.xml" rel="alternate" title="程序非主流" type="application/atom+xml">
   <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
 <link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
 <link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
@@ -35,9 +37,9 @@
 
 <body   >
   <header role="banner"><hgroup>
-  <h1><a href="/">李子的博客</a></h1>
+  <h1><a href="/">程序非主流</a></h1>
   
-    <h2>linux hacker.</h2>
+    <h2>李飞勃的个人主页</h2>
   
 </hgroup>
 
@@ -49,7 +51,7 @@
   
 <form action="http://google.com/search" method="get">
   <fieldset role="search">
-    <input type="hidden" name="q" value="site:lifeibo.github.com" />
+    <input type="hidden" name="q" value="site:www.lifeibo.com" />
     <input class="search" type="text" name="q" results="0" placeholder="Search"/>
   </fieldset>
 </form>
@@ -65,6 +67,60 @@
       <div class="blog-index">
   
   
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/12/19/hello-world/">Hello World</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-12-19T17:57:00+08:00" pubdate data-updated="true">Dec 19<span>th</span>, 2012</time>
+        
+         | <a href="/blog/2012/12/19/hello-world/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>我的第一篇文章
+Step5 - 为备份posts做准备
+数据备份很重要，我们可以把文章备份到另一个分支，比如store。在安装完主题后，系统会自动创建一个空目录source/_posts，以后创建的文章都会保存在这个目录内。我们先定位到该目录，然后初始化git（建议新开一个终端窗口，省得不停地切换目录）：</p>
+
+<pre><code>cd source/_posts/
+git init
+touch README.md
+git add *
+git commit -m 'first commit'
+git remote add origin git@github.com:[Username]/[Repository].git
+commit即可，无需push，因为我们重点是要新建store分支。接下来我们创建并切换到store：
+</code></pre>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/12/19/hello-world/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
   <div class="pagination">
     
     <a href="/blog/archives">Blog Archives</a>
@@ -76,6 +132,10 @@
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/12/19/hello-world/">hello world</a>
+      </li>
     
   </ul>
 </section>
@@ -109,7 +169,26 @@
   <script src="/javascripts/github.js" type="text/javascript"> </script>
 </section>
 
+<section>
+<p>
+<a id="hover_pop" href="http://weibo.com/lifeibo"  wb_user_id="1742220335" >淘李子@Weibo<span id="wb_follow_btn"> </a>
+    </p>
+    <script src="http://tjs.sjs.sinajs.cn/open/api/js/wb.js?appkey=1166443256" type="text/javascript"> </script>
+    <script type="text/javascript">
+        WB2.anyWhere(function(W){
+                W.widget.hoverCard({
+id: "hover_pop"
+});
 
+
+                W.widget.followButton({
+uid: '1742220335',
+id: "淘李子"
+});
+                });
+
+</script>
+</section>
 
 
 
@@ -126,6 +205,19 @@
 
 </footer>
   
+
+<script type="text/javascript">
+      var disqus_shortname = 'lifeibo';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
 
 
 

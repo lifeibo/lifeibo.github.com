@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[程序非主流]]></title>
-  <link href="http://www.lifeibo.com/atom.xml" rel="self"/>
+  <title><![CDATA[Category: nginx | 程序非主流]]></title>
+  <link href="http://www.lifeibo.com/blog/categories/nginx/atom.xml" rel="self"/>
   <link href="http://www.lifeibo.com/"/>
   <updated>2012-12-20T04:24:42+08:00</updated>
   <id>http://www.lifeibo.com/</id>
