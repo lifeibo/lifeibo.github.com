@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[My Octopress Blog]]></title>
+  <title><![CDATA[李子的博客]]></title>
   <link href="http://lifeibo.github.com/atom.xml" rel="self"/>
   <link href="http://lifeibo.github.com/"/>
-  <updated>2012-12-19T16:41:13+08:00</updated>
+  <updated>2012-12-19T17:40:41+08:00</updated>
   <id>http://lifeibo.github.com/</id>
   <author>
-    <name><![CDATA[Your Name]]></name>
+    <name><![CDATA[lifeibo]]></name>
     
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
