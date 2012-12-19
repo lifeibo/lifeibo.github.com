@@ -1,18 +1,24 @@
 body > header {
-  background: $header-bg;
+//   background:#fff url("http://blog.lifeibo.com/wp-content/themes/philna2/images/headers/default.jpg") no-repeat;
+  a{text-decoration:none;} 
+  background: inline-image('default.jpg') no-repeat center .5em;
+  background-color:#fff;border:1px solid #b6b6b6;margin-bottom:1px;
+//   background: $header-bg;
   h1 {
     display: inline-block;
     margin: 0;
     a, a:visited, a:hover {
-      color: $title_color;
+        color:#333;font-size:25px;text-shadow:2px 2px 5px #ccc;
+//       color: $title_color;
       text-decoration: none;
     }
   }
   h2 {
-    margin: .2em 0 0;
+//     margin: .2em 0 0;
     @extend .sans;
     font-size: 1em;
-    color: $subtitle-color;
+    margin:0;
+//     color: $subtitle-color;
     font-weight: normal;
   }
 }

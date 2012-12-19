@@ -4,7 +4,8 @@ body > nav {
   @include background($nav-bg-front, $nav-bg-back);
   border: {
     top: 1px solid $nav-border-top;
-    bottom: 1px solid $nav-border-bottom; }
+    bottom: 1px solid $nav-border-bottom; 
+  }
   padding-top: .35em;
   padding-bottom: .35em;
   form {

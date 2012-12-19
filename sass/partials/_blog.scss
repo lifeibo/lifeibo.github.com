@@ -1,4 +1,6 @@
 article {
+  margin:0 0 10px 0;
+  background: $main-bg $noise-bg;
   padding-top: 1em;
   a { @extend .force-wrap; }
   header {
@@ -9,8 +11,12 @@ article {
     background: $img-border bottom left repeat-x;
     h1 {
       margin: 0;
+      color:#0f099f;      
+//       border-bottom: 1px solid $sidebar-border;
+      font-size:20px;
+      text-shadow:2px 2px 5px #ccc;
       a { text-decoration: none;
-        &:hover { text-decoration: underline; } }
+        &:hover { text-decoration: none; } }
     }
     p {
       font-size: .9em;
@@ -80,19 +86,18 @@ article {
       @extend .separator;
     }
   }
-
 }
-article + article {
-  .blog-index & {
-    background: $img-border top left repeat-x;
-  }
-}
+// article + article {
+//   .blog-index {
+//     background: $img-border top left repeat-x;
+//   }
+// }
 #content .blog-index {
   padding: { top: 0; bottom: 0; }
   article { padding-top: 2em; }
   article header { background: none; padding-bottom: 0; }
   article h1 {
-    font-size: 2.2em;
+    padding-top: 2px;
     a { color: inherit; &:hover { color: $link-color-hover; } }
   }
   a[rel=full-article] {
