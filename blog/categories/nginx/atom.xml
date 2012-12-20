@@ -4,7 +4,7 @@
   <title><![CDATA[Category: nginx | 程序非主流]]></title>
   <link href="http://www.lifeibo.com/blog/categories/nginx/atom.xml" rel="self"/>
   <link href="http://www.lifeibo.com/"/>
-  <updated>2012-12-20T04:24:42+08:00</updated>
+  <updated>2012-12-20T15:19:22+08:00</updated>
   <id>http://www.lifeibo.com/</id>
   <author>
     <name><![CDATA[lifeibo]]></name>
@@ -14,22 +14,13 @@
 
   
   <entry>
-    <title type="html"><![CDATA[hello world]]></title>
-    <link href="http://www.lifeibo.com/blog/2012/12/19/hello-world/"/>
+    <title type="html"><![CDATA[nginx中slab分配大内存的陷阱]]></title>
+    <link href="http://www.lifeibo.com/blog/2012/12/19/slab-usage-alloc-larger-memory.html"/>
     <updated>2012-12-19T17:57:00+08:00</updated>
-    <id>http://www.lifeibo.com/blog/2012/12/19/hello-world</id>
-    <content type="html"><![CDATA[<p>我的第一篇文章
-Step5 - 为备份posts做准备
-数据备份很重要，我们可以把文章备份到另一个分支，比如store。在安装完主题后，系统会自动创建一个空目录source/_posts，以后创建的文章都会保存在这个目录内。我们先定位到该目录，然后初始化git（建议新开一个终端窗口，省得不停地切换目录）：</p>
+    <id>http://www.lifeibo.com/blog/2012/12/19/slab-usage-alloc-larger-memory</id>
+    <content type="html"><![CDATA[<p>我们在开发nginx模块时，需要很小心，nginx里面有很多陷阱是我们需要注意的。之前有人提到过slab分配器在使用时，不适合大内存分配，否则会出现分配不出内存的现象。</p>
 
-<pre><code>cd source/_posts/
-git init
-touch README.md
-git add *
-git commit -m 'first commit'
-git remote add origin git@github.com:[Username]/[Repository].git
-commit即可，无需push，因为我们重点是要新建store分支。接下来我们创建并切换到store：
-</code></pre>
+<p>在nginx一般使用slab来管理共享内存，在程序启动时，很分配好需要共享的内存，然后使用slab来进行初始化，之后就交给slab来管理这段内存。slab的源码分析与合适，在我之前的博客里面有分析过。</p>
 
 <!--more-->
 

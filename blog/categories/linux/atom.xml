@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[程序非主流]]></title>
-  <link href="http://www.lifeibo.com/atom.xml" rel="self"/>
+  <title><![CDATA[Category: linux | 程序非主流]]></title>
+  <link href="http://www.lifeibo.com/blog/categories/linux/atom.xml" rel="self"/>
   <link href="http://www.lifeibo.com/"/>
   <updated>2012-12-20T15:19:22+08:00</updated>
   <id>http://www.lifeibo.com/</id>
@@ -12,22 +12,6 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
-  
-  <entry>
-    <title type="html"><![CDATA[nginx中slab分配大内存的陷阱]]></title>
-    <link href="http://www.lifeibo.com/blog/2012/12/19/slab-usage-alloc-larger-memory.html"/>
-    <updated>2012-12-19T17:57:00+08:00</updated>
-    <id>http://www.lifeibo.com/blog/2012/12/19/slab-usage-alloc-larger-memory</id>
-    <content type="html"><![CDATA[<p>我们在开发nginx模块时，需要很小心，nginx里面有很多陷阱是我们需要注意的。之前有人提到过slab分配器在使用时，不适合大内存分配，否则会出现分配不出内存的现象。</p>
-
-<p>在nginx一般使用slab来管理共享内存，在程序启动时，很分配好需要共享的内存，然后使用slab来进行初始化，之后就交给slab来管理这段内存。slab的源码分析与合适，在我之前的博客里面有分析过。</p>
-
-<!--more-->
-
-
-
-]]></content>
-  </entry>
   
   <entry>
     <title type="html"><![CDATA[gdb从脚本加载命令]]></title>

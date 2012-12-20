@@ -9,9 +9,7 @@
   <meta name="author" content="lifeibo">
 
   
-  <meta name="description" content="我的第一篇文章
-Step5 - 为备份posts做准备
-数据备份很重要，我们可以把文章备份到另一个分支，比如store。在安装完主题后，系统会自动创建一个空目录source/_posts，以后创建的文章都会保存在这个目录内。我们先定位到该目录，然后初始化git（建议新开一个终端窗口， &hellip;">
+  <meta name="description" content="我们在开发nginx模块时，需要很小心，nginx里面有很多陷阱是我们需要注意的。之前有人提到过slab分配器在使用时，不适合大内存分配，否则会出现分配不出内存的现象。 在nginx一般使用slab来管理共享内存，在程序启动时，很分配好需要共享的内存，然后使用slab来进行初始化， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -20,7 +18,7 @@ Step5 - 为备份posts做准备
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.lifeibo.com/">
+  <link rel="canonical" href="http://www.lifeibo.com/index.html">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -72,7 +70,7 @@ Step5 - 为备份posts做准备
       
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2012/12/19/hello-world/">Hello World</a></h1>
+      <h1 class="entry-title"><a href="/blog/2012/12/19/slab-usage-alloc-larger-memory.html">Nginx中slab分配大内存的陷阱</a></h1>
     
     
       <p class="meta">
@@ -89,33 +87,94 @@ Step5 - 为备份posts做准备
 
 
 <time datetime="2012-12-19T17:57:00+08:00" pubdate data-updated="true">Dec 19<span>th</span>, 2012</time>
-        
-         | <a href="/blog/2012/12/19/hello-world/#disqus_thread">Comments</a>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/nginx/'>nginx</a>
+  
+</span>
+
+
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">lifeibo</span></span>
+
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>我的第一篇文章
-Step5 - 为备份posts做准备
-数据备份很重要，我们可以把文章备份到另一个分支，比如store。在安装完主题后，系统会自动创建一个空目录source/_posts，以后创建的文章都会保存在这个目录内。我们先定位到该目录，然后初始化git（建议新开一个终端窗口，省得不停地切换目录）：</p>
+  <div class="entry-content"><p>我们在开发nginx模块时，需要很小心，nginx里面有很多陷阱是我们需要注意的。之前有人提到过slab分配器在使用时，不适合大内存分配，否则会出现分配不出内存的现象。</p>
 
-<pre><code>cd source/_posts/
-git init
-touch README.md
-git add *
-git commit -m 'first commit'
-git remote add origin git@github.com:[Username]/[Repository].git
-commit即可，无需push，因为我们重点是要新建store分支。接下来我们创建并切换到store：
-</code></pre>
+<p>在nginx一般使用slab来管理共享内存，在程序启动时，很分配好需要共享的内存，然后使用slab来进行初始化，之后就交给slab来管理这段内存。slab的源码分析与合适，在我之前的博客里面有分析过。</p>
 
 </div>
   
   
     <footer>
-      <a rel="full-article" href="/blog/2012/12/19/hello-world/">Read on &rarr;</a>
+      <a rel="full-article" href="/blog/2012/12/19/slab-usage-alloc-larger-memory.html">Read on &rarr;</a>
     </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/10/11/gdb-script-load-cmd.html">Gdb从脚本加载命令</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-10-11T17:57:00+08:00" pubdate data-updated="true">Oct 11<span>th</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/linux/'>linux</a>
+  
+</span>
+
+
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">lifeibo</span></span>
+
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>先描述一下场景：
+你需要经常gdb调试程序，设置大量断点，程序由于core掉或代码的更新需要经常重启。每次重启后，需要重新attach程序，然后再重新设置断点。
+考虑一下，这些重复的工作，是否可以写到脚本里面，每次启动gdb时从脚本加载这些重复的命令。</p>
+
+<p>当然，gdb支持两种方法来加载脚本。
+1. 启动gdb的时候，也是我最爱的方式。gdb在启动的时候，会在当前目录下面查找”.gdbinit”这个文件，并把它的内容作为gdb命令进行解释。
+2. 在gdb运行期间，可以使用source script-file来解释gdb命令脚本script-file。</p>
+
+<p>速度试验一把吧？</p>
+</div>
+  
   
 
 
@@ -130,11 +189,21 @@ commit即可，无需push，因为我们重点是要新建store分支。接下�
 <aside class="sidebar">
   
     <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li class='category'><a href='/blog/categories/linux/'>linux (1)</a></li>
+<li class='category'><a href='/blog/categories/nginx/'>nginx (1)</a></li>
+</ul>
+</section>
+<section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2012/12/19/hello-world/">hello world</a>
+        <a href="/blog/2012/12/19/slab-usage-alloc-larger-memory.html">nginx中slab分配大内存的陷阱</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/10/11/gdb-script-load-cmd.html">gdb从脚本加载命令</a>
       </li>
     
   </ul>
@@ -189,9 +258,18 @@ id: "淘李子"
 
 </script>
 </section>
-
-
-
+<section>
+  <h1>Friends links</h1>
+  <ul>
+      <li><a href="http://blog.yufeng.info/?from=lizi" title="erlang非业余研究" target="_blank">erlang非业余研究</a></li>
+      <li><a href="http://zhuzhaoyuan.com/?from=lizi" title="叔度个人博客">叔度个人博客</a></li>
+      <li><a href="http://www.imagerabit.com/?from=lizi" title="图像兔" target="_blank">图像兔</a></li>
+      <li><a href="http://rdc.taobao.com/blog/cs/?from=lizi" title="淘宝核心系统博客" target="_blank">淘宝核心系统博客</a></li>
+      <li><a href="http://www.dutor.net/?from=lizi" title="甘雨妹纸的博客">甘雨妹纸</a></li>
+      <li><a href="http://blog.neveray.info/?from=lizi" title="那岩个人博客" target="_blank">那岩个人博客</a></li>
+      <li><a href="http://www.pagefault.info/?from=lizi" title="雕梁nginx和内核" target="_blank">雕梁nginx和内核</a></li>
+  </ul>
+</section>
 
   
 </aside>
