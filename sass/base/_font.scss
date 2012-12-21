@@ -1,11 +1,11 @@
-$font-default: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
-$font-mono: Menlo, Monaco, "Andale Mono", "lucida console", "Courier New", monospace;
+$font-default: Arial, sans-serif;
+$font-mono: "Courier New", monospace;
 
 $font-icon: FontAwesome;
 $font-icon-path: "/font/fontawesome-webfont";
 
 @font-face {
-	font-family: 'FontAwesome';
+	font-family: 'Courier New';
 	src: url('#{$font-icon-path}.eot');
 	src: url('#{$font-icon-path}.eot?#iefix') format('embedded-opentype'),
 		url('#{$font-icon-path}.woff') format('woff'),
