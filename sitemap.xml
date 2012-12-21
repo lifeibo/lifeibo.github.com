@@ -1,27 +1,19 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
     <url>
-        <loc>http://www.lifeibo.com/blog/2012/10/11/gdb-script-load-cmd.html</loc>
-        <lastmod>2012-12-20T14:57:00+08:00</lastmod>
-    </url>
-    <url>
         <loc>http://www.lifeibo.com/blog/2012/12/19/slab-usage-alloc-larger-memory.html</loc>
-        <lastmod>2012-12-20T14:57:00+08:00</lastmod>
+        <lastmod>2012-12-21T13:59:32+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.lifeibo.com/about/</loc>
-        <lastmod>2012-12-20T14:57:49+08:00</lastmod>
+        <lastmod>2012-12-20T15:46:11+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.lifeibo.com/blog/archives/</loc>
-        <lastmod>2012-12-20T14:57:49+08:00</lastmod>
+        <lastmod>2012-12-21T13:59:32+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.lifeibo.com/</loc>
-        <lastmod>2012-12-20T14:48:19+08:00</lastmod>
-    </url>
-    <url>
-        <loc>http://www.lifeibo.com/tags.html</loc>
-        <lastmod>2012-12-20T14:57:49+08:00</lastmod>
+        <lastmod>2012-12-21T13:59:32+08:00</lastmod>
     </url>
 </urlset>

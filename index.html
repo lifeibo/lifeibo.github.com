@@ -5,7 +5,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>程序非主流</title>
+  <title>桃李木子</title>
   <meta name="author" content="lifeibo">
 
   
@@ -24,7 +24,7 @@
   <script src="/javascripts/modernizr-2.0.js"></script>
   <script src="/javascripts/ender.js"></script>
   <script src="/javascripts/octopress.js" type="text/javascript"></script>
-  <link href="/atom.xml" rel="alternate" title="程序非主流" type="application/atom+xml">
+  <link href="/atom.xml" rel="alternate" title="桃李木子" type="application/atom+xml">
   <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
 <link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
 <link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
@@ -35,7 +35,7 @@
 
 <body   >
   <header role="banner"><hgroup>
-  <h1><a href="/">程序非主流</a></h1>
+  <h1><a href="/">桃李木子</a></h1>
   
     <h2>李飞勃的个人主页</h2>
   
@@ -109,7 +109,42 @@
 
   <div class="entry-content"><p>我们在开发nginx模块时，需要很小心，nginx里面有很多陷阱是我们需要注意的。之前有人提到过slab分配器在使用时，不适合大内存分配，否则会出现分配不出内存的现象。</p>
 
-<p>在nginx一般使用slab来管理共享内存，在程序启动时，很分配好需要共享的内存，然后使用slab来进行初始化，之后就交给slab来管理这段内存。slab的源码分析与合适，在我之前的博客里面有分析过。</p>
+<p>在nginx一般使用slab来管理共享内存，在程序启动时，很分配好需要共享的内存，然后使用slab来进行初始化，之后就交给slab来管理这段内存。slab的源码分析与合适，在我之前的博客里面有分析过。这次我们针对性的看看，为什么会出现分配不出内存的现象。</p>
+
+<p>分配内存时，会调用<code>ngx_slab_alloc_locked</code>，在这个函数里面会先判断size是否大于<code>ngx_slab_max_size</code>，代码如下。</p>
+
+<pre><code>void *
+ngx_slab_alloc_locked(ngx_slab_pool_t *pool, size_t size)
+{
+    size_t            s;
+    uintptr_t         p, n, m, mask, *bitmap;
+    ngx_uint_t        i, slot, shift, map;
+    ngx_slab_page_t  *page, *prev, *slots;
+
+    /* 判断大小 */
+    if (size &gt;= ngx_slab_max_size) {
+
+        ngx_log_debug1(NGX_LOG_DEBUG_ALLOC, ngx_cycle-&gt;log, 0,
+                "slab alloc: %uz", size);
+
+        /* 直接分配页 */
+        page = ngx_slab_alloc_pages(pool, (size + ngx_pagesize - 1)
+                &gt;&gt; ngx_pagesize_shift);
+        if (page) {
+            p = (page - pool-&gt;pages) &lt;&lt; ngx_pagesize_shift;
+            p += (uintptr_t) pool-&gt;start;
+
+        } else {
+            p = 0;
+        }
+
+        goto done;
+    }
+
+    ...
+
+}
+</code></pre>
 
 </div>
   
@@ -117,64 +152,6 @@
     <footer>
       <a rel="full-article" href="/blog/2012/12/19/slab-usage-alloc-larger-memory.html">Read on &rarr;</a>
     </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/10/11/gdb-script-load-cmd.html">Gdb从脚本加载命令</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-10-11T17:57:00+08:00" pubdate data-updated="true">Oct 11<span>th</span>, 2012</time>
-      
-
-<span class="categories">
-  
-    <a class='category' href='/blog/categories/linux/'>linux</a>
-  
-</span>
-
-
-      
-  
-
-<span class="byline author vcard">Posted by <span class="fn">lifeibo</span></span>
-
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>先描述一下场景：
-你需要经常gdb调试程序，设置大量断点，程序由于core掉或代码的更新需要经常重启。每次重启后，需要重新attach程序，然后再重新设置断点。
-考虑一下，这些重复的工作，是否可以写到脚本里面，每次启动gdb时从脚本加载这些重复的命令。</p>
-
-<p>当然，gdb支持两种方法来加载脚本。
-1. 启动gdb的时候，也是我最爱的方式。gdb在启动的时候，会在当前目录下面查找”.gdbinit”这个文件，并把它的内容作为gdb命令进行解释。
-2. 在gdb运行期间，可以使用source script-file来解释gdb命令脚本script-file。</p>
-
-<p>速度试验一把吧？</p>
-</div>
-  
   
 
 
@@ -190,8 +167,7 @@
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li class='category'><a href='/blog/categories/linux/'>linux (1)</a></li>
-<li class='category'><a href='/blog/categories/nginx/'>nginx (1)</a></li>
+    <ul id="category-list"><li class='category'><a href='/blog/categories/nginx/'>nginx (1)</a></li>
 </ul>
 </section>
 <section>
@@ -200,10 +176,6 @@
     
       <li class="post">
         <a href="/blog/2012/12/19/slab-usage-alloc-larger-memory.html">nginx中slab分配大内存的陷阱</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/10/11/gdb-script-load-cmd.html">gdb从脚本加载命令</a>
       </li>
     
   </ul>
