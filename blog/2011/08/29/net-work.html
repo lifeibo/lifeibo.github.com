@@ -5,14 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Blog Archive - 李子的博客</title>
+  <title>统计网卡流量 - 李子的博客</title>
   <meta name="author" content="lifeibo">
 
   
-  <meta name="description" content="Blog Archive 2012 nginx中slab分配大内存的陷阱
-Dec 19 2012 posted in nginx 2011 nginx源码分析之变量
-Dec 17 2011 posted in nginx 端口重用引发的悲剧
-Sep 09 2011 posted in linux &hellip;">
+  <meta name="description" content="显示网卡流量的方法蛮多，一般我们可以通过dstat来查看，但dstat不一定所有的机器都有安装。而我们知道，通过ifconfig可以看到某一网卡发送与接收的字节数，所以我们可以写一个脚本来统计一下。 先看ifconfig: $ ifconfig eth0 eth0 Link encap: &hellip;">
   
 <meta name="keywords" content="李飞勃 nginx 网络 源码 学习 lifeibo push comet Linux Apache">
 
@@ -22,7 +19,7 @@ Sep 09 2011 posted in linux &hellip;">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.lifeibo.com/blog/archives/index.html">
+  <link rel="canonical" href="http://www.lifeibo.com/blog/2011/08/29/net-work.html">
   <link href="/favicon.ico" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/stylesheets/highlight/googlecode.css" rel="stylesheet" type="text/css">
@@ -69,95 +66,149 @@ Sep 09 2011 posted in linux &hellip;">
   <div id="main">
     <div id="content">
       <div>
-<article role="article">
+<article class="hentry" role="article">
   
   <header>
-    <h1 class="entry-title">Blog Archive</h1>
+    
+      <h1 class="entry-title">统计网卡流量</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-08-29T17:57:00+08:00" pubdate data-updated="true">Aug 29<span>th</span>, 2011</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/linux/'>linux</a>
+  
+</span>
+
+
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">lifeibo</span></span>
+
+        
+      </p>
     
   </header>
-  
-  <div id="blog-archives">
 
 
+<div class="entry-content"><p>显示网卡流量的方法蛮多，一般我们可以通过dstat来查看，但dstat不一定所有的机器都有安装。而我们知道，通过ifconfig可以看到某一网卡发送与接收的字节数，所以我们可以写一个脚本来统计一下。</p>
 
-  
-  <h2>2012</h2>
+<p>先看ifconfig:</p>
 
-<article>
-  
-<h1><a href="/blog/2012/12/19/slab-usage-alloc-larger-memory.html">nginx中slab分配大内存的陷阱</a></h1>
-<time datetime="2012-12-19T17:57:00+08:00" pubdate><span class='month'>Dec</span> <span class='day'>19</span> <span class='year'>2012</span></time>
+<pre><code>$ ifconfig eth0  
+eth0      Link encap:Ethernet  HWaddr A4:BA:DB:43:BA:B1  
+          inet addr:10.232.4.34  Bcast:10.232.4.255  Mask:255.255.255.0  
+          inet6 addr: fe80::a6ba:dbff:fe43:bab1/64 Scope:Link  
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1  
+          RX packets:301707081 errors:0 dropped:1346358 overruns:0 frame:0  
+          TX packets:296718885 errors:0 dropped:0 overruns:0 carrier:0  
+          collisions:0 txqueuelen:1000  
+          RX bytes:28485042645 (26.5 GiB)  TX bytes:35887266717 (33.4 GiB)  
+          Interrupt:98 Memory:d6000000-d6012800  
+</code></pre>
 
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/nginx/'>nginx</a></span>
-</footer>
+<p>我们可以看到rx与tx两个数据，于是我们的脚本出来了：</p>
 
+<pre><code>#!/bin/bash
+alias ifconfig="/sbin/ifconfig"
+eth=eth0
+while true; do
+RXpre=$(ifconfig ${eth} | grep bytes | awk '{print $2}'| awk -F":" '{print $2}')
+TXpre=$(ifconfig ${eth} | grep bytes | awk '{print $6}' | awk -F":" '{print $2}')
+sleep 1
+RXnext=$(ifconfig ${eth} | grep bytes | awk '{print $2}'| awk -F":" '{print $2}')
+TXnext=$(ifconfig ${eth} | grep bytes | awk '{print $6}' | awk -F":" '{print $2}')
+echo RX ----- TX
+echo "$((((${RXnext}-${RXpre})/1024)/1024))MB/s $((((${TXnext}-${TXpre})/1024/1024)))MB/s"
+done
+</code></pre>
 
-</article>
+<p>脚本暂时比较简单，可以添加一些参数判断，比如多长时间显示一次等等，先看看执行结果:</p>
 
-
-
-  
-  <h2>2011</h2>
-
-<article>
-  
-<h1><a href="/blog/2011/12/17/nginx-varibles.html">nginx源码分析之变量</a></h1>
-<time datetime="2011-12-17T18:51:00+08:00" pubdate><span class='month'>Dec</span> <span class='day'>17</span> <span class='year'>2011</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/nginx/'>nginx</a></span>
-</footer>
-
-
-</article>
-
-
-
-<article>
-  
-<h1><a href="/blog/2011/09/09/port-reuse.html">端口重用引发的悲剧</a></h1>
-<time datetime="2011-09-09T17:57:00+08:00" pubdate><span class='month'>Sep</span> <span class='day'>09</span> <span class='year'>2011</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/linux/'>linux</a></span>
-</footer>
-
-
-</article>
-
-
-
-<article>
-  
-<h1><a href="/blog/2011/08/29/net-work.html">统计网卡流量</a></h1>
-<time datetime="2011-08-29T17:57:00+08:00" pubdate><span class='month'>Aug</span> <span class='day'>29</span> <span class='year'>2011</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/linux/'>linux</a></span>
-</footer>
-
-
-</article>
-
-
-
-<article>
-  
-<h1><a href="/blog/2011/07/07/200-long-connection.html">http长连接200万尝试及调优</a></h1>
-<time datetime="2011-07-07T17:57:00+08:00" pubdate><span class='month'>Jul</span> <span class='day'>07</span> <span class='year'>2011</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/http/'>http</a></span>
-</footer>
-
-
-</article>
-
+<pre><code>$ ./a  
+RX ----- TX  
+5MB/s 7MB/s  
+RX ----- TX  
+5MB/s 7MB/s  
+RX ----- TX  
+4MB/s 6MB/s  
+RX ----- TX  
+4MB/s 6MB/s  
+RX ----- TX  
+</code></pre>
 </div>
 
+
+  <footer>
+    <p class="meta">
+      
   
+
+<span class="byline author vcard">Posted by <span class="fn">lifeibo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-08-29T17:57:00+08:00" pubdate data-updated="true">Aug 29<span>th</span>, 2011</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/linux/'>linux</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2011/07/07/200-long-connection.html" title="Previous Post: http长连接200万尝试及调优">&laquo; http长连接200万尝试及调优</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2011/09/09/port-reuse.html" title="Next Post: 端口重用引发的悲剧">端口重用引发的悲剧 &raquo;</a>
+      
+    </p>
+  </footer>
 </article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
 
 </div>
 
@@ -253,7 +304,10 @@ id: "淘李子"
       var disqus_shortname = 'lifeibo';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.lifeibo.com/blog/2011/08/29/net-work.html';
+        var disqus_url = 'http://www.lifeibo.com/blog/2011/08/29/net-work.html';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;

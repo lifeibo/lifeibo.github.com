@@ -4,7 +4,7 @@
   <title><![CDATA[李子的博客]]></title>
   <link href="http://www.lifeibo.com/atom.xml" rel="self"/>
   <link href="http://www.lifeibo.com/"/>
-  <updated>2012-12-23T01:58:02+08:00</updated>
+  <updated>2012-12-23T03:54:14+08:00</updated>
   <id>http://www.lifeibo.com/</id>
   <author>
     <name><![CDATA[lifeibo]]></name>
@@ -117,6 +117,470 @@ ngx_slab_alloc_pages(ngx_slab_pool_t *pool, ngx_uint_t pages)
 </code></pre>
 
 <p>从上面的代码中我们可以看到，在空闲页中<code>p-&gt;slab</code>用于标记剩下连续，连接页的第一个页会设置这个值。所以在slab初始化之后，第一个页的slab被赋值为所有页的数量。在使用过程中，由于经常alloc与free，会造成连续空闲页变得断断续续，当没有连续的所需要的空闲页进行分配时，就会出现内存无法分配的问题。所以，使用slab进行大内存分配时，就会出现内存无法分配的现象。所以，我们在使用中，应该避免使用slab进行大内存的分配。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[nginx源码分析之变量]]></title>
+    <link href="http://www.lifeibo.com/blog/2011/12/17/nginx-varibles.html"/>
+    <updated>2011-12-17T18:51:00+08:00</updated>
+    <id>http://www.lifeibo.com/blog/2011/12/17/nginx-varibles</id>
+    <content type="html"><![CDATA[<p>nginx中的变量在nginx中的使用非常的多，正因为变量的存在，使得nginx在配置上变得非常灵活。</p>
+
+<p>我们知道，在nginx的配置文件中，配合变量，我们可以动态的得到我们想要的值。最常见的使用是，我们在写<code>access_log</code>的格式时，需要用到多很多变量。
+而这些变量是如何工作的呢？我们可以输出哪些变量？我们又怎么才能输出自己想要的内容呢？当然，我们可能还想知道，如何在我们的模块里面去使用变量，如何添加变量，获取变量的值，以及设置变量的内容？如何使用，以及需要注意些什么？</p>
+
+<p>问题一大堆，那接下来，就让我们一起去一探nginx源码的秘密。</p>
+
+<p>我要讲的内容</p>
+
+<ol>
+<li>变量的分类</li>
+<li>相关结构</li>
+<li>模块中操作变量的函数</li>
+<li>变量的实现源码及流程</li>
+</ol>
+
+
+<h2>1. 变量的分类</h2>
+
+<p>站在使用者的角度来看，我们在配置文件中可以看到：</p>
+
+<ol>
+<li>set添加的变量(变量名由用户设定)</li>
+<li>nginx功能模块中添加的变量，如geo模块(变量名由用户设定)</li>
+<li>nginx内建的变量(变量名已由nginx设定好，可以看<code>ngx_http_core_variables</code>结构)</li>
+<li>有一定规则的变量，如”<code>http_host</code>”等(有相同前缀，表示某一类变量)，我们就称为规则变量吧</li>
+</ol>
+
+
+<p>从这里，也解决我们的问题，在配置<code>access_log</code>时，我们可以配置哪些变量，是否是用户添加的变量，是否是内建变量在<code>ngx_http_core_variables</code>中有，其次，是否是规则变量，另外，如果想输出自己的内容，那只能写模块自己添加一个变量了，或者hack nginx在<code>ngx_http_core_variables</code>中添加一个变量。</p>
+
+<!--more-->
+
+
+<p>从nginx内部实现上来看，变量可分为：</p>
+
+<ol>
+<li>hash过的变量</li>
+<li>未hash过的变量，变量有设置<code>NGX_HTTP_VAR_NOHASH</code></li>
+<li>未hash过的变量，但有一定规则的变量，如以这些串开头的：”<code>http_</code>”,”<code>sent_http_</code>”,”<code>upstream_http_</code>”,”<code>cookie_</code>”,”<code>arg_</code>”</li>
+</ol>
+
+
+<p>我们在模块里面可以通过<code>ngx_http_add_variable</code>来添加一个变量，在后面的介绍中我们可以看到。而我们添加的变量，最好不要是以这些规则开头的变量，否则就有可能会覆盖掉这些规则的变量。</p>
+
+<p>从变量获取者来看，可以分为索引变量与未索引的变量。</p>
+
+<ol>
+<li>索引变量，我们通过<code>ngx_http_get_variable_index</code>来获得一个索引变量的索引号。然后可以通过<code>ngx_http_get_indexed_variable</code>与<code>ngx_http_get_flushed_variable</code>来获取索引过变量的值。如果要索引某个变量，则只能在配置文件初始化的时候来设置。<code>ngx_http_get_variable_index</code>不会添加一个真正的变量，在配置文件初始化结束时，会检查该变量的合法性。索引过的变量，将会有缓存等特性(缓存在<code>r-&gt;variables</code>中)。</li>
+<li>未索引过的变量，则只能通过<code>ngx_http_get_variable</code>来获取变量的值。</li>
+</ol>
+
+
+<h2>2. 相关结构</h2>
+
+<p>接下来，我们就要开始进入源码的世界了，先看看几个关键结构：</p>
+
+<pre><code>// ngx_variable_value_t即变量的结果，变量的值
+typedef struct {
+    unsigned    len:28;     
+
+    unsigned    valid:1;    // 当前变量是否合法
+    unsigned    no_cacheable:1; // 当前变量是否可以缓存，缓存过的变量将只会调用一次get_handler函数
+    unsigned    not_found:1;// 变量是否找到
+    unsigned    escape:1;
+
+    u_char     *data;       // 变量的数据
+} ngx_variable_value_t;
+
+// 变量本身的信息
+struct ngx_http_variable_s {
+    ngx_str_t                     name;     // 变量的名称
+    ngx_http_set_variable_pt      set_handler;  // 变量的设置函数
+    ngx_http_get_variable_pt      get_handler;  // 变量的get函数
+    uintptr_t                     data;     // 传给get与set_handler的值
+    ngx_uint_t                    flags;    // 变量的标志
+    ngx_uint_t                    index;    // 如果有索引，则是变量的索引号
+};
+
+// 在ngx_http_core_module的配置文件中保存了所使用的变量信息
+typedef struct {
+    ngx_hash_t                 variables_hash;     // 变量的hash表
+    ngx_array_t                variables;         // 索引变量的数组
+    ngx_hash_keys_arrays_t    *variables_keys;       // 变量的hash数组
+} ngx_http_core_main_conf_t;
+
+// 变量在每个请求中的值是不一样的，也就是说变量是请求相关的
+// 所以在ngx_http_request_s中有一个变量数组，主要用于缓存当前请求的变量结果
+// 从而可以避免一个变量的多次计数，计算过一次的变量就不用再计算了
+// 但里面保存的一定是索引变量的值，是否缓存，也要由变量的特性来决定
+struct ngx_http_request_s {
+    ngx_http_variable_value_t        *variables;
+}
+</code></pre>
+
+<h2>3. 模块中操作变量的函数</h2>
+
+<p>那么，在模块中，我们要如何使用一个变量呢？在前面讲分类的时候，我们也提到过了，这里再总结并细说一下：
+首先，如果要添加一个变量，我们需要调用<code>ngx_http_add_variable</code>函数来添加一个变量。添加时需要指明变量的名称就行了。</p>
+
+<pre><code>// name: 即变量的名字
+// flags: 如果同一个变量要多次添加，则flags应该设置NGX_HTTP_VAR_CHANGEABLE
+// 否则，多次添加将会提示重复
+// flags表示可以是：NGX_HTTP_VAR_CHANGEABLE
+//                 NGX_HTTP_VAR_NOCACHEABLE
+//                 NGX_HTTP_VAR_INDEXED
+//                 NGX_HTTP_VAR_NOHASH
+ngx_http_variable_t *ngx_http_add_variable(ngx_conf_t *cf, ngx_str_t *name, ngx_uint_t flags);
+</code></pre>
+
+<p>然后，要获取变量，如果要高效一点，我们可以先将该变量放到索引数组里面，通过<code>ngx_http_get_variable_index</code>来添加一个变量的索引：</p>
+
+<pre><code>// name: 即nginx支持的任意变量名
+// 返回该变量的索引
+ngx_int_t ngx_http_get_variable_index(ngx_conf_t *cf, ngx_str_t *name);
+</code></pre>
+
+<p>不过，要注意的是，添加的变量必须是nginx支持的已存在的变量。即如果是hash过的变量，则一定是通过<code>ngx_http_add_variable</code>添加的变量，否则，一定是规则变量，如”<code>http_host</code>”。当然，在解析配置文件的时候，变量不一定是要先通过<code>ngx_http_add_variable</code>然后才能获取索引，这个是不需要有顺序保证的。nginx会将在最后配置文件解析完成后，去验证这些索引变量的合法性，在<code>ngx_http_variables_init_vars</code>函数中可以看到，我们在后面具体再分析。
+所以，可以看到，获取索引的操作，一定是要在解析配置文件的过程是进行的， 一旦配置文件解析完成后，索引变量不能再添加。在获取索引号后，我们需要保存该索引号，以便在后面通过索引号来获取变量。</p>
+
+<p>那么，索引变量的获取，可以通过<code>ngx_http_get_indexed_variable</code>与<code>ngx_http_get_flushed_variable</code>来获取，两个函数间的区别，我们后面再介绍：</p>
+
+<pre><code>ngx_http_variable_value_t *ngx_http_get_indexed_variable(ngx_http_request_t *r, ngx_uint_t index);  
+ngx_http_variable_value_t *ngx_http_get_flushed_variable(ngx_http_request_t *r, ngx_uint_t index);  
+</code></pre>
+
+<p>而如果没有索引过的变量，则只能通过<code>ngx_http_get_variable</code>函数来获取了。</p>
+
+<pre><code>// key 由ngx_hash_strlow来计算  
+ngx_http_variable_value_t *ngx_http_get_variable(ngx_http_request_t *r, ngx_str_t *name, ngx_uint_t key);  
+</code></pre>
+
+<p>可以看到，key是通过ngx_hash_strlow来计算的，所以变量名是没有大小写区分的。</p>
+
+<p>最后，通过获取变量的函数，我们可以看到，变量是与请求相关的，也就是获取的变量都是与当前请求相关的。</p>
+
+<h2>4. 变量的实现源码及流程</h2>
+
+<p>那接下来，我们就来看看nginx在源码中的实现吧！</p>
+
+<p><em>初始化</em>：</p>
+
+<p>首先，在数据结构中，我们知道<code>ngx_http_core_main_conf_t</code>中保存了变量相关的一些信息，我们添加的变量key放在<code>cmcf-&gt;variables_keys</code>中，而cmcf->variables保存变量的索引结构，<code>cmcf-&gt;variables_hash</code>则保存着变量hash过的结构。</p>
+
+<p><code>ngx_http_add_variable</code>添加变量的时候，会先放到<code>cmcf-&gt;variables_keys</code>中，然后在解析完后，再生成hash结构体。</p>
+
+<p>那么，<code>ngx_http_core_module</code>的preconfiguration阶段，调用<code>ngx_http_variables_add_core_vars</code>初始化变量的数据结构，然后再添加<code>ngx_http_core_variables</code>结构中的变量。所以可以看出，nginx中内建的变量是在这个数组里面的。
+然后在解析其它模块的配置文件时，会通过<code>ngx_http_add_variable</code>函数来添加变量：</p>
+
+<pre><code>ngx_http_variable_t *
+ngx_http_add_variable(ngx_conf_t *cf, ngx_str_t *name, ngx_uint_t flags)
+{
+    // 先检查变量是否在已添加
+    key = cmcf-&gt;variables_keys-&gt;keys.elts;
+    for (i = 0; i &lt; cmcf-&gt;variables_keys-&gt;keys.nelts; i++) {
+        if (name-&gt;len != key[i].key.len
+                || ngx_strncasecmp(name-&gt;data, key[i].key.data, name-&gt;len) != 0)
+        {
+            continue;
+        }
+
+        v = key[i].value;
+
+        // 如果已添加，并且是不可变的变量，则提示变量的重复添加
+        // 其它NGX_HTTP_VAR_CHANGEABLE就是为了让变量的重复添加时不出错，都指向同一变量
+        if (!(v-&gt;flags &amp; NGX_HTTP_VAR_CHANGEABLE)) {
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                    "the duplicate \"%V\" variable", name);
+            return NULL;
+        }
+        // 如果变量已添加，并且有NGX_HTTP_VAR_CHANGEABLE表志，则直接返回
+        return v;
+    }
+
+    // 添加这个变量
+    v = ngx_palloc(cf-&gt;pool, sizeof(ngx_http_variable_t));
+
+    v-&gt;name.len = name-&gt;len;
+
+    // 注意，变量名不区分大小写
+    ngx_strlow(v-&gt;name.data, name-&gt;data, name-&gt;len);
+
+    rc = ngx_hash_add_key(cmcf-&gt;variables_keys, &amp;v-&gt;name, v, 0);
+
+    if (rc == NGX_ERROR) {
+        return NULL;
+    }
+
+    return v;
+}
+</code></pre>
+
+<p>在添加完变量后，我们需要设置变量的<code>get_handler</code>与<code>set_handler</code>。<code>get_handler</code>是当我们在获取变量的时候调用的函数，在该函数中，我们需要设置变量的值。而在<code>set_handler</code>则是用于主动设置变量的值。<code>get_handler</code>与<code>set_handler</code>的区别是：<code>get_handler</code>是在变量使用时获取值，而<code>set_handler</code>则是变量会主动先设置好，在使用的时候就不用再算了。目前，<code>set</code>指令，设置一个变量的值是用的<code>set_handler</code>。
+在需要获取变量的模块中，可以通过<code>ngx_http_get_variable_index</code>来得到变量的索引，这个函数工作很简单，就是在<code>ngx_http_core_main_conf_t</code>的variables中添加一个变量，并返回该变量在数组中的索引号。源码就不展示了。然后，在解析配置文件之后，在<code>ngx_http_block</code>中通过<code>ngx_http_variables_init_vars</code>函数来初始化变量，在<code>ngx_http_variables_init_vars</code>中，会做两个事情，检查索引变量，以及初始化变量的hash表。首先，对索引数组中的每一个元素，会先检查是否在<code>ngx_http_core_main_conf_t</code>的<code>variables_keys</code>中出现，即是否是添加过的，然后再检查是否是有特定规则的变量，如”<code>http_host</code>”，如果都不是，则说明该变量是不存在的，该索引会对应于一个不存在的变量，所以就会提示错误，程序无法启动。然后，如果变量有设置<code>NGX_HTTP_VAR_NOHASH</code>，则会跳过该变量，不进行hash，再对hash过的变量建立hash表。</p>
+
+<p><em>在请求中:</em>
+当一个请求过来时，在ngx_http_init_request函数中，即请求初始化的时候，会建立一个与ngx_http_core_main_conf_t中的变量索引数组variables大小一样的数组。r->variables有两个作用，一是为了缓存变量的值，二是可以在创建子请求时，父请求给子请求传递一些信息。注意，变量的值是与当前请求相关的，所以每个请求里面会不一样。
+然后在模块里面ngx_http_get_indexed_variable和ngx_http_get_flushed_variable，这两个函数的代码还是要小讲一下：</p>
+
+<pre><code>ngx_http_variable_value_t *
+ngx_http_get_indexed_variable(ngx_http_request_t *r, ngx_uint_t index)
+{
+    ngx_http_variable_t        *v;
+    ngx_http_core_main_conf_t  *cmcf;
+
+    cmcf = ngx_http_get_module_main_conf(r, ngx_http_core_module);
+
+    // 变量已经获取过了，就不再计算变量的值，直接返回
+    if (r-&gt;variables[index].not_found || r-&gt;variables[index].valid) {
+        return &amp;r-&gt;variables[index];
+    }
+
+    // 如果变量是初次获取，则调用变量的get_handler来得到变量值，并缓存到r-&gt;variables中去
+
+    v = cmcf-&gt;variables.elts;
+
+    if (v[index].get_handler(r, &amp;r-&gt;variables[index], v[index].data)
+            == NGX_OK)
+    {
+        if (v[index].flags &amp; NGX_HTTP_VAR_NOCACHEABLE) {
+            r-&gt;variables[index].no_cacheable = 1;
+        }
+
+        return &amp;r-&gt;variables[index];
+    }
+
+    // 变量获取失败，设置为不合法，以及未找到
+    // 注意我们在调用完本函数后，需要检查函数的返回值以及这两个属性
+    r-&gt;variables[index].valid = 0;
+    r-&gt;variables[index].not_found = 1;
+    return NULL;
+}
+
+ngx_http_variable_value_t *
+ngx_http_get_flushed_variable(ngx_http_request_t *r, ngx_uint_t index)
+{
+    ngx_http_variable_value_t  *v;
+
+    v = &amp;r-&gt;variables[index];
+
+    if (v-&gt;valid) {
+        // 变量已经获取过了，而且是合法的并且可缓存的，则直接返回
+        if (!v-&gt;no_cacheable) {
+            return v;
+        }
+
+        // 否则，清除标志，并再次获取变量的值
+        v-&gt;valid = 0;
+        v-&gt;not_found = 0;
+    }
+
+    return ngx_http_get_indexed_variable(r, index);
+}
+</code></pre>
+
+<p>注意：<code>ngx_http_get_flushed_variable</code>会考虑到变量的cache标志，如果变量是可缓存的，则只有在变量是合法的时才返回变量的值，否则重新获取变量的值。而<code>ngx_http_get_indexed_variable</code>则不管变量是否可缓存，只要获取过一次了，不管是否成功，则都不会再获取了。最后，如果是未索引的变量，我们可以通过<code>ngx_http_get_variable</code>函数来得到变量的值。<code>ngx_http_get_variable</code>做的工作：</p>
+
+<ol>
+<li>变量是hash过的，而且变量有索引过，则调用<code>ngx_http_get_flushed_variable</code>来得到变量值。</li>
+<li>变量hash过，未索引过，则调用变量的<code>get_handler</code>来获取变量，注意，此时每次调用变量，都将会调用<code>get_handler</code>来计算变量的值，然后返回该值。注意因为只有索引过的变量的值才会缓存到<code>ngx_http_request_t</code>的variables中去，所以变量的添加方要注意，如果当前变量是可缓存的，要将该变量建立索引，即调用完<code>ngx_http_add_variable</code>后，再调用<code>ngx_http_get_variable_index</code>来将该变量建立索引。</li>
+<li>特定规则的变量，”http_”开头的会调用<code>ngx_http_variable_unknown_header_out</code>函数，”<code>upstream_http_</code>”开头的会调用<code>ngx_http_upstream_header_variable</code>函数，”cookie_”开头的会调用<code>ngx_http_variable_cookie</code>函数，”arg_”开头的会调用<code>ngx_http_variable_argument</code>函数。</li>
+<li>变量未找到，设置变量</li>
+</ol>
+
+
+<p>至此，变量的整个流程差不多就完了，另外还有一个要注意的是，在创建子请求时候的变量。在<code>ngx_http_subrequest</code>函数中，我们可以看到，子请求的variables是直接指向父请求的variables数组的，所以子请求与父请求是共享variables数组的，这样父子请求就可以传递变量的值。但正因为如此，我们在使用父子请求的时候会产生一些问题，如果一个父请求创建多个子请求，他们之间获取同一个变量时，会有很明显的干扰，因为每个请求的环境是不一样的，这样获取的值也是不一样的。</p>
+
+<p>好吧，变量也简单的介绍了一下。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[端口重用引发的悲剧]]></title>
+    <link href="http://www.lifeibo.com/blog/2011/09/09/port-reuse.html"/>
+    <updated>2011-09-09T17:57:00+08:00</updated>
+    <id>http://www.lifeibo.com/blog/2011/09/09/port-reuse</id>
+    <content type="html"><![CDATA[<p>最近做个性能测试，需要在一台机器上启动很多客户端，连接到同一台服务器，我在一台机器上启动了六万个连接，于是，端口被占用完了。按照我的理解，因为我作用端口是作为客户端，应该不会影响到其它进程，于是我放心大胆地去做测试，结果就引发了悲剧。有服务器程序要用到5191端口，却显示端口被占用了，lsof看了下，居然只有我的进程占用了，完全颠覆我的惯性思想。服务端与客户端都有打开<code>SO_REUSEADDR</code>。</p>
+
+<p>我们先来看看<code>SO_REUSEADDR</code>的说明：</p>
+
+<pre><code>SO_REUSEADDR可以用在以下四种情况下。
+(摘自《Unix网络编程》卷一，即UNPv1)
+1、当有一个有相同本地地址和端口的socket1处于TIME_WAIT状态时，而你启
+动的程序的socket2要占用该地址和端口，你的程序就要用到该选项。
+2、SO_REUSEADDR允许同一port上启动同一服务器的多个实例(多个进程)。但
+每个实例绑定的IP地址是不能相同的。在有多块网卡或用IP Alias技术的机器可
+以测试这种情况。
+3、SO_REUSEADDR允许单个进程绑定相同的端口到多个socket上，但每个soc
+ket绑定的ip地址不同。这和2很相似，区别请看UNPv1。
+4、SO_REUSEADDR允许完全相同的地址和端口的重复绑定。但这只用于UDP的
+多播，不用于TCP。
+</code></pre>
+
+<p>分析了一下，第二种情况比较相似，但第二种情况是针对同一服务器的多个实例(多个进程)，很显然跟我的情况不一样。我是在客户端与服务端间争用端口。 所以，我的情况根本就不适合以上任何一种情况，所以设置<code>SO_REUSEADDR</code>为1是无用的。</p>
+
+<p>再接下来分析：
+一个TCP连接需要由四元组来形成，即(<code>src_ip</code>,<code>src_port</code>,<code>dst_ip,dst_port</code>)。
+如果有客户端建立了连接(<code>src_ip1</code>,<code>src_port1</code>,<code>dst_ip1</code>,<code>dst_port1</code>)，那么，如果我们还有listen在(<code>src_ip1</code>,<code>src_port1</code>)，那么当(<code>dst_ip1</code>,<code>dst_port1</code>)发送消息过来，系统应该把消息给谁？所以就说明了客户端占用了某一端口时，该端口就不能被其它进程listen了。</p>
+
+<p>那么，对于有些童鞋，可能还有这样的疑问，是否一台机器就只能建立65535个连接了（端口16位限制）？非也，一个连接由四元组(<code>src_ip</code>,<code>src_port</code>,<code>dst_ip</code>,<code>dst_port</code>)形式，那么当(<code>src_ip</code>,<code>src_port</code>)一定时，变化的(<code>dst_ip</code>,<code>dst_port</code>)就可以建立更多连接了。</p>
+
+<p>可能有些童鞋还有疑问，作为一个服务器监控一个端口，比如80端口，它为什么可以建立上百万个连接？首先要明白一点，当accept出来后的新socket，它所占用的本地端口依然是80端口，很多新手都以为是一个新的随机端口。由四元组就很容易分析到了，同一个(<code>src_ip</code>,<code>src_port</code>)，它所对应的(<code>dst_ip</code>,<code>dst_port</code>)可以无穷变化，这样就可以建立很多个客户端的请求了。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[统计网卡流量]]></title>
+    <link href="http://www.lifeibo.com/blog/2011/08/29/net-work.html"/>
+    <updated>2011-08-29T17:57:00+08:00</updated>
+    <id>http://www.lifeibo.com/blog/2011/08/29/net-work</id>
+    <content type="html"><![CDATA[<p>显示网卡流量的方法蛮多，一般我们可以通过dstat来查看，但dstat不一定所有的机器都有安装。而我们知道，通过ifconfig可以看到某一网卡发送与接收的字节数，所以我们可以写一个脚本来统计一下。</p>
+
+<p>先看ifconfig:</p>
+
+<pre><code>$ ifconfig eth0  
+eth0      Link encap:Ethernet  HWaddr A4:BA:DB:43:BA:B1  
+          inet addr:10.232.4.34  Bcast:10.232.4.255  Mask:255.255.255.0  
+          inet6 addr: fe80::a6ba:dbff:fe43:bab1/64 Scope:Link  
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1  
+          RX packets:301707081 errors:0 dropped:1346358 overruns:0 frame:0  
+          TX packets:296718885 errors:0 dropped:0 overruns:0 carrier:0  
+          collisions:0 txqueuelen:1000  
+          RX bytes:28485042645 (26.5 GiB)  TX bytes:35887266717 (33.4 GiB)  
+          Interrupt:98 Memory:d6000000-d6012800  
+</code></pre>
+
+<p>我们可以看到rx与tx两个数据，于是我们的脚本出来了：</p>
+
+<pre><code>#!/bin/bash
+alias ifconfig="/sbin/ifconfig"
+eth=eth0
+while true; do
+RXpre=$(ifconfig ${eth} | grep bytes | awk '{print $2}'| awk -F":" '{print $2}')
+TXpre=$(ifconfig ${eth} | grep bytes | awk '{print $6}' | awk -F":" '{print $2}')
+sleep 1
+RXnext=$(ifconfig ${eth} | grep bytes | awk '{print $2}'| awk -F":" '{print $2}')
+TXnext=$(ifconfig ${eth} | grep bytes | awk '{print $6}' | awk -F":" '{print $2}')
+echo RX ----- TX
+echo "$((((${RXnext}-${RXpre})/1024)/1024))MB/s $((((${TXnext}-${TXpre})/1024/1024)))MB/s"
+done
+</code></pre>
+
+<p>脚本暂时比较简单，可以添加一些参数判断，比如多长时间显示一次等等，先看看执行结果:</p>
+
+<pre><code>$ ./a  
+RX ----- TX  
+5MB/s 7MB/s  
+RX ----- TX  
+5MB/s 7MB/s  
+RX ----- TX  
+4MB/s 6MB/s  
+RX ----- TX  
+4MB/s 6MB/s  
+RX ----- TX  
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[http长连接200万尝试及调优]]></title>
+    <link href="http://www.lifeibo.com/blog/2011/07/07/200-long-connection.html"/>
+    <updated>2011-07-07T17:57:00+08:00</updated>
+    <id>http://www.lifeibo.com/blog/2011/07/07/200-long-connection</id>
+    <content type="html"><![CDATA[<p>对于一个server，我们一般考虑他所能支撑的qps，但有那么一种应用， 我们需要关注的是它能支撑的连接数个数，而并非qps，当然qps也是我们需要考虑的性能点之一。这种应用常见于消息推送系统，也称为comet应用，比如聊天室或即时消息推送系统等。comet应用具体可见我之前的介绍，在此不多讲。对于这类系统，因为很多消息需要到产生时才推送给客户端，所以当没有消息产生时，就需要hold住客户端的连接，这样，当有大量的客户端时，就需要hold住大量的连接，这种连接我们称为长连接。</p>
+
+<p>首先，我们分析一下，对于这类服务，需消耗的系统资源有：cpu、网络、内存。所以，想让系统性能达到最佳，我们先找到系统的瓶颈所在。这样的长连接，往往我们是没有数据发送的，所以也可以看作为非活动连接。对于系统来说，这种非活动连接，并不占用cpu与网络资源，而仅仅占用系统的内存而已。所以，我们假想，只要系统内存足够，系统就能够支持我们想达到的连接数，那么事实是否真的如此？如果真能这样，内核来维护这相当大的数据结构，也是一种考验。</p>
+
+<p>要完成测试，我们需要有一个服务端，还有大量的客户端。所以需要服务端程序与客户端程序。为达到目标，我的想法是这样的：客户端产生一个连接，向服务端发起一个请求，服务端hold住该连接，而不返回数据。</p>
+
+<h2>1. 服务端的准备</h2>
+
+<p>对于服务端，由于之前的假想，我们需要一台大内存的服务器，用于部署nginx的comet应用。下面是我用的服务端的情况：</p>
+
+<pre><code>Summary:        Dell R710, 2 x Xeon E5520 2.27GHz, 23.5GB / 24GB 1333MHz  
+System:         Dell PowerEdge R710 (Dell 0VWN1R)  
+Processors:     2 x Xeon E5520 2.27GHz 5860MHz FSB (16 cores)  
+Memory:         23.5GB / 24GB 1333MHz == 6 x 4GB, 12 x empty  
+Disk-Control:   megaraid_sas0: Dell/LSILogic PERC 6/i, Package 6.2.0-0013, FW 1.22.02-0612,  
+Network:        eth0 (bnx2):Broadcom NetXtreme II BCM5709 Gigabit Ethernet,1000Mb/s  
+OS:             RHEL Server 5.4 (Tikanga), Linux 2.6.18-164.el5 x86_64, 64-bit  
+</code></pre>
+
+<p>服务端程序很简单，基于nginx写的一个comet模块，该模块接受用户的请求，然后保持用户的连接，而不返回。Nginx的status模块，可直接用于监控最大连接数。</p>
+
+<p>服务端还需要调整一下系统的参数，在/etc/sysctl.conf中：</p>
+
+<pre><code>net.core.somaxconn = 2048  
+net.core.rmem_default = 262144  
+net.core.wmem_default = 262144  
+net.core.rmem_max = 16777216  
+net.core.wmem_max = 16777216  
+net.ipv4.tcp_rmem = 4096 4096 16777216  
+net.ipv4.tcp_wmem = 4096 4096 16777216  
+net.ipv4.tcp_mem = 786432 2097152 3145728  
+net.ipv4.tcp_max_syn_backlog = 16384  
+net.core.netdev_max_backlog = 20000  
+net.ipv4.tcp_fin_timeout = 15  
+net.ipv4.tcp_max_syn_backlog = 16384  
+net.ipv4.tcp_tw_reuse = 1  
+net.ipv4.tcp_tw_recycle = 1  
+net.ipv4.tcp_max_orphans = 131072  
+
+/sbin/sysctl -p 生效
+</code></pre>
+
+<p>这里，我们主要看这几项：<br/>
+<code>net.ipv4.tcp_rmem</code> 用来配置读缓冲的大小，三个值，第一个是这个读缓冲的最小值，第三个是最大值，中间的是默认值。我们可以在程序中修改读缓冲的大小，但是不能超过最小与最大。为了使每个socket所使用的内存数最小，我这里设置默认值为4096。<br/>
+<code>net.ipv4.tcp_wmem</code> 用来配置写缓冲的大小。<br/>
+读缓冲与写缓冲在大小，直接影响到socket在内核中内存的占用。<br/>
+而<code>net.ipv4.tcp_mem</code>则是配置tcp的内存大小，其单位是页，而不是字节。当超过第二个值时，TCP进入pressure模式，此时TCP尝试稳定其内存的使用，当小于第一个值时，就退出pressure模式。当内存占用超过第三个值时，TCP就拒绝分配socket了，查看dmesg，会打出很多的日志“TCP: too many of orphaned sockets”。<br/>
+另外<code>net.ipv4.tcp_max_orphans</code>这个值也要设置一下，这个值表示系统所能处理不属于任何进程的socket数量，当我们需要快速建立大量连接时，就需要关注下这个值了。当不属于任何进程的socket的数量大于这个值时，dmesg就会看到”too many of orphaned sockets”。</p>
+
+<p>另外，服务端需要打开大量的文件描述符，比如200万个，但我们设置最大文件描述符限制时，会遇到一些问题，我们在后面详细讲解。</p>
+
+<h2>2. 客户端的准备</h2>
+
+<p>由于我们需要构建大量的客户端，而我们知道，在一台系统上，连接到一个服务时的本地端口是有限的。由于端口是16位整数，也就只能是0到65535，而0到1023是预留端口，所以能分配的只是1024到65534，也就是64511个。也就是说，一台机器只能创建六万多个长连接。要达到我们的两百万连接，需要大概34台客户端。<br/>
+当然，我们可以采用虚拟ip的方式来实现这么多客户端，如果是虚拟ip，则每个ip可以绑定六万多个端口，34个虚拟ip就可以搞定。而我这里呢，正好申请到了公司的资源，所以就采用实体机来做了。<br/>
+由于系统默认参数，自动分配的端口数有限，是从32768到61000，所以我们需要更改客户端/etc/sysctl.conf的参数：</p>
+
+<pre><code>net.ipv4.ip_local_port_range = 1024 65535  
+
+/sbin/sysctl -p 
+</code></pre>
+
+<p>客户端程序是基于libevent写的一个测试程序，不断的建立新的连接请求。</p>
+
+<h2>3. 由于客户端与服务端需要建立大量的socket，所以我们需要调速一下最大文件描述符。</h2>
+
+<p>客户端，需要创建六万多个socket，我设置最大为十万好了，的在/etc/security/limits.conf中添加：</p>
+
+<pre><code>admin    soft    nofile  100000  
+admin    hard    nofile  100000  
+</code></pre>
+
+<p>服务端，需要创建200万连接，那我想设置nofile为200万，好，问题来了。<br/>
+当我设置nofile为200万时，系统直接无法登陆了。尝试几次，发现最大只能设置到100万。在查过源码后，才知道，原来在2.6.25内核之前有个宏定义，定义了这个值的最大值，为1024*1024，正好是100万，而在2.6.25内核及其之后，这个值是可以通过/proc/sys/fs/nr_open来设置。于是我升级内核到2.6.32。ulimit详细介绍见博文：<a href="http://blog.yufeng.info/archives/1380">老生常谈: ulimit问题及其影响</a>。<br/>
+升级内核后，继续我们的调优，如下：</p>
+
+<pre><code>sudo bash -c 'echo 2000000 &gt; /proc/sys/fs/nr_open' 
+</code></pre>
+
+<p>现在再设置nofile就可以了:</p>
+
+<pre><code>admin    soft    nofile  2000000  
+admin    hard    nofile  2000000 
+</code></pre>
+
+<h2>4. 最后，在测试的过程中，根据dmesg的系统打出的信息不断调整服务端/sbin/sysctl中的配置，最后我们的测试完成了200万的长连接。</h2>
+
+<p>为了使内存占用尽量减少，我将Nginx的request_pool_size从默认的4k改成1k了。另外，net.ipv4.tcp_wmem与net.ipv4.tcp_rmem中的默认值也设置成4k。</p>
+
+<p>两百万连接时，通过nginx的监控得到数据：<br/>
+<img src="http://www.lifeibo.com/wp-content/uploads/2011/07/abc.jpg" alt="data" /><br/>
+两百万连接时系统内存情况：<br/>
+<img src="http://www.lifeibo.com/wp-content/uploads/2011/07/2.png" alt="mem" /></p>
 ]]></content>
   </entry>
   

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: linux | 李子的博客]]></title>
+  <link href="http://www.lifeibo.com/blog/categories/linux/atom.xml" rel="self"/>
+  <link href="http://www.lifeibo.com/"/>
+  <updated>2012-12-23T03:54:14+08:00</updated>
+  <id>http://www.lifeibo.com/</id>
+  <author>
+    <name><![CDATA[lifeibo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[端口重用引发的悲剧]]></title>
+    <link href="http://www.lifeibo.com/blog/2011/09/09/port-reuse.html"/>
+    <updated>2011-09-09T17:57:00+08:00</updated>
+    <id>http://www.lifeibo.com/blog/2011/09/09/port-reuse</id>
+    <content type="html"><![CDATA[<p>最近做个性能测试，需要在一台机器上启动很多客户端，连接到同一台服务器，我在一台机器上启动了六万个连接，于是，端口被占用完了。按照我的理解，因为我作用端口是作为客户端，应该不会影响到其它进程，于是我放心大胆地去做测试，结果就引发了悲剧。有服务器程序要用到5191端口，却显示端口被占用了，lsof看了下，居然只有我的进程占用了，完全颠覆我的惯性思想。服务端与客户端都有打开<code>SO_REUSEADDR</code>。</p>
+
+<p>我们先来看看<code>SO_REUSEADDR</code>的说明：</p>
+
+<pre><code>SO_REUSEADDR可以用在以下四种情况下。
+(摘自《Unix网络编程》卷一，即UNPv1)
+1、当有一个有相同本地地址和端口的socket1处于TIME_WAIT状态时，而你启
+动的程序的socket2要占用该地址和端口，你的程序就要用到该选项。
+2、SO_REUSEADDR允许同一port上启动同一服务器的多个实例(多个进程)。但
+每个实例绑定的IP地址是不能相同的。在有多块网卡或用IP Alias技术的机器可
+以测试这种情况。
+3、SO_REUSEADDR允许单个进程绑定相同的端口到多个socket上，但每个soc
+ket绑定的ip地址不同。这和2很相似，区别请看UNPv1。
+4、SO_REUSEADDR允许完全相同的地址和端口的重复绑定。但这只用于UDP的
+多播，不用于TCP。
+</code></pre>
+
+<p>分析了一下，第二种情况比较相似，但第二种情况是针对同一服务器的多个实例(多个进程)，很显然跟我的情况不一样。我是在客户端与服务端间争用端口。 所以，我的情况根本就不适合以上任何一种情况，所以设置<code>SO_REUSEADDR</code>为1是无用的。</p>
+
+<p>再接下来分析：
+一个TCP连接需要由四元组来形成，即(<code>src_ip</code>,<code>src_port</code>,<code>dst_ip,dst_port</code>)。
+如果有客户端建立了连接(<code>src_ip1</code>,<code>src_port1</code>,<code>dst_ip1</code>,<code>dst_port1</code>)，那么，如果我们还有listen在(<code>src_ip1</code>,<code>src_port1</code>)，那么当(<code>dst_ip1</code>,<code>dst_port1</code>)发送消息过来，系统应该把消息给谁？所以就说明了客户端占用了某一端口时，该端口就不能被其它进程listen了。</p>
+
+<p>那么，对于有些童鞋，可能还有这样的疑问，是否一台机器就只能建立65535个连接了（端口16位限制）？非也，一个连接由四元组(<code>src_ip</code>,<code>src_port</code>,<code>dst_ip</code>,<code>dst_port</code>)形式，那么当(<code>src_ip</code>,<code>src_port</code>)一定时，变化的(<code>dst_ip</code>,<code>dst_port</code>)就可以建立更多连接了。</p>
+
+<p>可能有些童鞋还有疑问，作为一个服务器监控一个端口，比如80端口，它为什么可以建立上百万个连接？首先要明白一点，当accept出来后的新socket，它所占用的本地端口依然是80端口，很多新手都以为是一个新的随机端口。由四元组就很容易分析到了，同一个(<code>src_ip</code>,<code>src_port</code>)，它所对应的(<code>dst_ip</code>,<code>dst_port</code>)可以无穷变化，这样就可以建立很多个客户端的请求了。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[统计网卡流量]]></title>
+    <link href="http://www.lifeibo.com/blog/2011/08/29/net-work.html"/>
+    <updated>2011-08-29T17:57:00+08:00</updated>
+    <id>http://www.lifeibo.com/blog/2011/08/29/net-work</id>
+    <content type="html"><![CDATA[<p>显示网卡流量的方法蛮多，一般我们可以通过dstat来查看，但dstat不一定所有的机器都有安装。而我们知道，通过ifconfig可以看到某一网卡发送与接收的字节数，所以我们可以写一个脚本来统计一下。</p>
+
+<p>先看ifconfig:</p>
+
+<pre><code>$ ifconfig eth0  
+eth0      Link encap:Ethernet  HWaddr A4:BA:DB:43:BA:B1  
+          inet addr:10.232.4.34  Bcast:10.232.4.255  Mask:255.255.255.0  
+          inet6 addr: fe80::a6ba:dbff:fe43:bab1/64 Scope:Link  
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1  
+          RX packets:301707081 errors:0 dropped:1346358 overruns:0 frame:0  
+          TX packets:296718885 errors:0 dropped:0 overruns:0 carrier:0  
+          collisions:0 txqueuelen:1000  
+          RX bytes:28485042645 (26.5 GiB)  TX bytes:35887266717 (33.4 GiB)  
+          Interrupt:98 Memory:d6000000-d6012800  
+</code></pre>
+
+<p>我们可以看到rx与tx两个数据，于是我们的脚本出来了：</p>
+
+<pre><code>#!/bin/bash
+alias ifconfig="/sbin/ifconfig"
+eth=eth0
+while true; do
+RXpre=$(ifconfig ${eth} | grep bytes | awk '{print $2}'| awk -F":" '{print $2}')
+TXpre=$(ifconfig ${eth} | grep bytes | awk '{print $6}' | awk -F":" '{print $2}')
+sleep 1
+RXnext=$(ifconfig ${eth} | grep bytes | awk '{print $2}'| awk -F":" '{print $2}')
+TXnext=$(ifconfig ${eth} | grep bytes | awk '{print $6}' | awk -F":" '{print $2}')
+echo RX ----- TX
+echo "$((((${RXnext}-${RXpre})/1024)/1024))MB/s $((((${TXnext}-${TXpre})/1024/1024)))MB/s"
+done
+</code></pre>
+
+<p>脚本暂时比较简单，可以添加一些参数判断，比如多长时间显示一次等等，先看看执行结果:</p>
+
+<pre><code>$ ./a  
+RX ----- TX  
+5MB/s 7MB/s  
+RX ----- TX  
+5MB/s 7MB/s  
+RX ----- TX  
+4MB/s 6MB/s  
+RX ----- TX  
+4MB/s 6MB/s  
+RX ----- TX  
+</code></pre>
+]]></content>
+  </entry>
+  
+</feed>

@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>nginx中slab分配大内存的陷阱 - 李子的博客</title>
+  <title>端口重用引发的悲剧 - 李子的博客</title>
   <meta name="author" content="lifeibo">
 
   
-  <meta name="description" content="我们在开发nginx模块时，需要很小心，nginx里面有很多陷阱是我们需要注意的。之前有人提到过slab分配器在使用时，不适合大内存分配，否则会出现分配不出内存的现象。 nginx一般使用slab来管理共享内存，在程序启动时，很分配好需要共享的内存，然后使用slab来进行初始化， &hellip;">
+  <meta name="description" content="最近做个性能测试，需要在一台机器上启动很多客户端，连接到同一台服务器，我在一台机器上启动了六万个连接，于是，端口被占用完了。按照我的理解，因为我作用端口是作为客户端，应该不会影响到其它进程，于是我放心大胆地去做测试，结果就引发了悲剧。有服务器程序要用到5191端口，却显示端口被占用了， &hellip;">
   
 <meta name="keywords" content="李飞勃 nginx 网络 源码 学习 lifeibo push comet Linux Apache">
 
@@ -19,7 +19,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.lifeibo.com/blog/2012/12/19/slab-usage-alloc-larger-memory.html">
+  <link rel="canonical" href="http://www.lifeibo.com/blog/2011/09/09/port-reuse.html">
   <link href="/favicon.ico" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/stylesheets/highlight/googlecode.css" rel="stylesheet" type="text/css">
@@ -70,7 +70,7 @@
   
   <header>
     
-      <h1 class="entry-title">Nginx中slab分配大内存的陷阱</h1>
+      <h1 class="entry-title">端口重用引发的悲剧</h1>
     
     
       <p class="meta">
@@ -86,12 +86,12 @@
   
 
 
-<time datetime="2012-12-19T17:57:00+08:00" pubdate data-updated="true">Dec 19<span>th</span>, 2012</time>
+<time datetime="2011-09-09T17:57:00+08:00" pubdate data-updated="true">Sep 9<span>th</span>, 2011</time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/nginx/'>nginx</a>
+    <a class='category' href='/blog/categories/linux/'>linux</a>
   
 </span>
 
@@ -107,105 +107,32 @@
   </header>
 
 
-<div class="entry-content"><p>我们在开发nginx模块时，需要很小心，nginx里面有很多陷阱是我们需要注意的。之前有人提到过slab分配器在使用时，不适合大内存分配，否则会出现分配不出内存的现象。</p>
+<div class="entry-content"><p>最近做个性能测试，需要在一台机器上启动很多客户端，连接到同一台服务器，我在一台机器上启动了六万个连接，于是，端口被占用完了。按照我的理解，因为我作用端口是作为客户端，应该不会影响到其它进程，于是我放心大胆地去做测试，结果就引发了悲剧。有服务器程序要用到5191端口，却显示端口被占用了，lsof看了下，居然只有我的进程占用了，完全颠覆我的惯性思想。服务端与客户端都有打开<code>SO_REUSEADDR</code>。</p>
 
-<p>nginx一般使用slab来管理共享内存，在程序启动时，很分配好需要共享的内存，然后使用slab来进行初始化，之后就交给slab来管理这段内存。slab的源码分析与合适，在我之前的博客里面有分析过。这次我们针对性的看看，为什么会出现分配不出内存的现象。</p>
+<p>我们先来看看<code>SO_REUSEADDR</code>的说明：</p>
 
-<p>分配内存时，会调用<code>ngx_slab_alloc_locked</code>，在这个函数里面会先判断size是否大于<code>ngx_slab_max_size</code>，代码如下。</p>
-
-<pre><code>void *
-ngx_slab_alloc_locked(ngx_slab_pool_t *pool, size_t size)
-{
-    size_t            s;
-    uintptr_t         p, n, m, mask, *bitmap;
-    ngx_uint_t        i, slot, shift, map;
-    ngx_slab_page_t  *page, *prev, *slots;
-
-    /* 判断大小 */
-    if (size &gt;= ngx_slab_max_size) {
-
-        ngx_log_debug1(NGX_LOG_DEBUG_ALLOC, ngx_cycle-&gt;log, 0,
-                       "slab alloc: %uz", size);
-
-        /* 直接分配页 */
-        page = ngx_slab_alloc_pages(pool, (size + ngx_pagesize - 1)
-                &gt;&gt; ngx_pagesize_shift);
-        if (page) {
-            p = (page - pool-&gt;pages) &lt;&lt; ngx_pagesize_shift;
-            p += (uintptr_t) pool-&gt;start;
-
-        } else {
-            p = 0;
-        }
-
-        goto done;
-    }
-
-    ...
-
-}
+<pre><code>SO_REUSEADDR可以用在以下四种情况下。
+(摘自《Unix网络编程》卷一，即UNPv1)
+1、当有一个有相同本地地址和端口的socket1处于TIME_WAIT状态时，而你启
+动的程序的socket2要占用该地址和端口，你的程序就要用到该选项。
+2、SO_REUSEADDR允许同一port上启动同一服务器的多个实例(多个进程)。但
+每个实例绑定的IP地址是不能相同的。在有多块网卡或用IP Alias技术的机器可
+以测试这种情况。
+3、SO_REUSEADDR允许单个进程绑定相同的端口到多个socket上，但每个soc
+ket绑定的ip地址不同。这和2很相似，区别请看UNPv1。
+4、SO_REUSEADDR允许完全相同的地址和端口的重复绑定。但这只用于UDP的
+多播，不用于TCP。
 </code></pre>
 
-<!--more-->
+<p>分析了一下，第二种情况比较相似，但第二种情况是针对同一服务器的多个实例(多个进程)，很显然跟我的情况不一样。我是在客户端与服务端间争用端口。 所以，我的情况根本就不适合以上任何一种情况，所以设置<code>SO_REUSEADDR</code>为1是无用的。</p>
 
+<p>再接下来分析：
+一个TCP连接需要由四元组来形成，即(<code>src_ip</code>,<code>src_port</code>,<code>dst_ip,dst_port</code>)。
+如果有客户端建立了连接(<code>src_ip1</code>,<code>src_port1</code>,<code>dst_ip1</code>,<code>dst_port1</code>)，那么，如果我们还有listen在(<code>src_ip1</code>,<code>src_port1</code>)，那么当(<code>dst_ip1</code>,<code>dst_port1</code>)发送消息过来，系统应该把消息给谁？所以就说明了客户端占用了某一端口时，该端口就不能被其它进程listen了。</p>
 
-<p><code>ngx_slab_max_size</code>在nginx调用<code>ngx_slab_init</code>的时候初始化为<code>ngx_pagesize / 2</code>。我们知道，slab会将整块的内存分成pages，每个pages大小为<code>ngx_pagesize</code>，slab在分配小内存时，会将一个page拆分成多个小块进行分配，而如果我们分配的内存大于<code>ngx_pagesize / 2</code>时，slab是没办法进行拆分的，所以当我们分配的内存大于<code>ngx_slab_max_size</code>时，直接分配页内存就可以了（因为不需要进行拆分）。所以这里直接调用<code>ngx_slab_alloc_pages</code>来分配内存。<code>ngx_slab_alloc_pages</code>的代码如下：</p>
+<p>那么，对于有些童鞋，可能还有这样的疑问，是否一台机器就只能建立65535个连接了（端口16位限制）？非也，一个连接由四元组(<code>src_ip</code>,<code>src_port</code>,<code>dst_ip</code>,<code>dst_port</code>)形式，那么当(<code>src_ip</code>,<code>src_port</code>)一定时，变化的(<code>dst_ip</code>,<code>dst_port</code>)就可以建立更多连接了。</p>
 
-<pre><code>static ngx_slab_page_t *
-ngx_slab_alloc_pages(ngx_slab_pool_t *pool, ngx_uint_t pages)
-{
-    ngx_slab_page_t  *page, *p;
-
-    for (page = pool-&gt;free.next; page != &amp;pool-&gt;free; page = page-&gt;next) {
-
-        /* 判断当前页还能分配多少连续的页 */
-        if (page-&gt;slab &gt;= pages) {
-
-            if (page-&gt;slab &gt; pages) {
-                /* 重新设置剩下还能分配的连续空间 */
-                page[pages].slab = page-&gt;slab - pages;
-                page[pages].next = page-&gt;next;
-                page[pages].prev = page-&gt;prev;
-
-                p = (ngx_slab_page_t *) page-&gt;prev;
-                p-&gt;next = &amp;page[pages];
-                page-&gt;next-&gt;prev = (uintptr_t) &amp;page[pages];
-
-            } else {
-                /* 剩下连续的pages正好够用 */
-                p = (ngx_slab_page_t *) page-&gt;prev;
-                p-&gt;next = page-&gt;next;
-                page-&gt;next-&gt;prev = page-&gt;prev;
-            }
-
-            page-&gt;slab = pages | NGX_SLAB_PAGE_START;
-            page-&gt;next = NULL;
-            page-&gt;prev = NGX_SLAB_PAGE;
-
-            /* 如果只需要分配一个页，则直接返回 */
-            if (--pages == 0) {
-                return page;
-            }
-
-            /* 否则将剩下所需要的页设置占用标记 */
-            for (p = page + 1; pages; pages--) {
-                p-&gt;slab = NGX_SLAB_PAGE_BUSY;
-                p-&gt;next = NULL;
-                p-&gt;prev = NGX_SLAB_PAGE;
-                p++;
-            }
-
-            return page;
-        }
-    }
-
-    ngx_slab_error(pool, NGX_LOG_CRIT, "ngx_slab_alloc() failed: no memory");
-
-    return NULL;
-}
-</code></pre>
-
-<p>从上面的代码中我们可以看到，在空闲页中<code>p-&gt;slab</code>用于标记剩下连续，连接页的第一个页会设置这个值。所以在slab初始化之后，第一个页的slab被赋值为所有页的数量。在使用过程中，由于经常alloc与free，会造成连续空闲页变得断断续续，当没有连续的所需要的空闲页进行分配时，就会出现内存无法分配的问题。所以，使用slab进行大内存分配时，就会出现内存无法分配的现象。所以，我们在使用中，应该避免使用slab进行大内存的分配。</p>
+<p>可能有些童鞋还有疑问，作为一个服务器监控一个端口，比如80端口，它为什么可以建立上百万个连接？首先要明白一点，当accept出来后的新socket，它所占用的本地端口依然是80端口，很多新手都以为是一个新的随机端口。由四元组就很容易分析到了，同一个(<code>src_ip</code>,<code>src_port</code>)，它所对应的(<code>dst_ip</code>,<code>dst_port</code>)可以无穷变化，这样就可以建立很多个客户端的请求了。</p>
 </div>
 
 
@@ -228,12 +155,12 @@ ngx_slab_alloc_pages(ngx_slab_pool_t *pool, ngx_uint_t pages)
   
 
 
-<time datetime="2012-12-19T17:57:00+08:00" pubdate data-updated="true">Dec 19<span>th</span>, 2012</time>
+<time datetime="2011-09-09T17:57:00+08:00" pubdate data-updated="true">Sep 9<span>th</span>, 2011</time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/nginx/'>nginx</a>
+    <a class='category' href='/blog/categories/linux/'>linux</a>
   
 </span>
 
@@ -249,8 +176,10 @@ ngx_slab_alloc_pages(ngx_slab_pool_t *pool, ngx_uint_t pages)
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2011/12/17/nginx-varibles.html" title="Previous Post: nginx源码分析之变量">&laquo; nginx源码分析之变量</a>
+        <a class="basic-alignment left" href="/blog/2011/08/29/net-work.html" title="Previous Post: 统计网卡流量">&laquo; 统计网卡流量</a>
       
+      
+        <a class="basic-alignment right" href="/blog/2011/12/17/nginx-varibles.html" title="Next Post: nginx源码分析之变量">nginx源码分析之变量 &raquo;</a>
       
     </p>
   </footer>
@@ -357,8 +286,8 @@ id: "淘李子"
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://www.lifeibo.com/blog/2012/12/19/slab-usage-alloc-larger-memory.html';
-        var disqus_url = 'http://www.lifeibo.com/blog/2012/12/19/slab-usage-alloc-larger-memory.html';
+        var disqus_identifier = 'http://www.lifeibo.com/blog/2011/09/09/port-reuse.html';
+        var disqus_url = 'http://www.lifeibo.com/blog/2011/09/09/port-reuse.html';
         var disqus_script = 'embed.js';
       
     (function () {

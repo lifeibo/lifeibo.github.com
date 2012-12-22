@@ -1,131 +1,114 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: nginx | 李子的博客]]></title>
-  <link href="http://www.lifeibo.com/blog/categories/nginx/atom.xml" rel="self"/>
-  <link href="http://www.lifeibo.com/"/>
-  <updated>2012-12-23T03:54:14+08:00</updated>
-  <id>http://www.lifeibo.com/</id>
-  <author>
-    <name><![CDATA[lifeibo]]></name>
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>nginx源码分析之变量 - 李子的博客</title>
+  <meta name="author" content="lifeibo">
+
+  
+  <meta name="description" content="nginx中的变量在nginx中的使用非常的多，正因为变量的存在，使得nginx在配置上变得非常灵活。 我们知道，在nginx的配置文件中，配合变量，我们可以动态的得到我们想要的值。最常见的使用是，我们在写access_log的格式时，需要用到多很多变量。
+而这些变量是如何工作的呢？ &hellip;">
+  
+<meta name="keywords" content="李飞勃 nginx 网络 源码 学习 lifeibo push comet Linux Apache">
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.lifeibo.com/blog/2011/12/17/nginx-varibles.html">
+  <link href="/favicon.ico" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/highlight/googlecode.css" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="李子的博客" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">李子的博客</a></h1>
+  
+    <h2>想想写写</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:www.lifeibo.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about/">about</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
     
-  </author>
-  <generator uri="http://octopress.org/">Octopress</generator>
+      <h1 class="entry-title">Nginx源码分析之变量</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
 
   
-  <entry>
-    <title type="html"><![CDATA[nginx中slab分配大内存的陷阱]]></title>
-    <link href="http://www.lifeibo.com/blog/2012/12/19/slab-usage-alloc-larger-memory.html"/>
-    <updated>2012-12-19T17:57:00+08:00</updated>
-    <id>http://www.lifeibo.com/blog/2012/12/19/slab-usage-alloc-larger-memory</id>
-    <content type="html"><![CDATA[<p>我们在开发nginx模块时，需要很小心，nginx里面有很多陷阱是我们需要注意的。之前有人提到过slab分配器在使用时，不适合大内存分配，否则会出现分配不出内存的现象。</p>
-
-<p>nginx一般使用slab来管理共享内存，在程序启动时，很分配好需要共享的内存，然后使用slab来进行初始化，之后就交给slab来管理这段内存。slab的源码分析与合适，在我之前的博客里面有分析过。这次我们针对性的看看，为什么会出现分配不出内存的现象。</p>
-
-<p>分配内存时，会调用<code>ngx_slab_alloc_locked</code>，在这个函数里面会先判断size是否大于<code>ngx_slab_max_size</code>，代码如下。</p>
-
-<pre><code>void *
-ngx_slab_alloc_locked(ngx_slab_pool_t *pool, size_t size)
-{
-    size_t            s;
-    uintptr_t         p, n, m, mask, *bitmap;
-    ngx_uint_t        i, slot, shift, map;
-    ngx_slab_page_t  *page, *prev, *slots;
-
-    /* 判断大小 */
-    if (size &gt;= ngx_slab_max_size) {
-
-        ngx_log_debug1(NGX_LOG_DEBUG_ALLOC, ngx_cycle-&gt;log, 0,
-                       "slab alloc: %uz", size);
-
-        /* 直接分配页 */
-        page = ngx_slab_alloc_pages(pool, (size + ngx_pagesize - 1)
-                &gt;&gt; ngx_pagesize_shift);
-        if (page) {
-            p = (page - pool-&gt;pages) &lt;&lt; ngx_pagesize_shift;
-            p += (uintptr_t) pool-&gt;start;
-
-        } else {
-            p = 0;
-        }
-
-        goto done;
-    }
-
-    ...
-
-}
-</code></pre>
-
-<!--more-->
 
 
-<p><code>ngx_slab_max_size</code>在nginx调用<code>ngx_slab_init</code>的时候初始化为<code>ngx_pagesize / 2</code>。我们知道，slab会将整块的内存分成pages，每个pages大小为<code>ngx_pagesize</code>，slab在分配小内存时，会将一个page拆分成多个小块进行分配，而如果我们分配的内存大于<code>ngx_pagesize / 2</code>时，slab是没办法进行拆分的，所以当我们分配的内存大于<code>ngx_slab_max_size</code>时，直接分配页内存就可以了（因为不需要进行拆分）。所以这里直接调用<code>ngx_slab_alloc_pages</code>来分配内存。<code>ngx_slab_alloc_pages</code>的代码如下：</p>
+<time datetime="2011-12-17T18:51:00+08:00" pubdate data-updated="true">Dec 17<span>th</span>, 2011</time>
+      
 
-<pre><code>static ngx_slab_page_t *
-ngx_slab_alloc_pages(ngx_slab_pool_t *pool, ngx_uint_t pages)
-{
-    ngx_slab_page_t  *page, *p;
-
-    for (page = pool-&gt;free.next; page != &amp;pool-&gt;free; page = page-&gt;next) {
-
-        /* 判断当前页还能分配多少连续的页 */
-        if (page-&gt;slab &gt;= pages) {
-
-            if (page-&gt;slab &gt; pages) {
-                /* 重新设置剩下还能分配的连续空间 */
-                page[pages].slab = page-&gt;slab - pages;
-                page[pages].next = page-&gt;next;
-                page[pages].prev = page-&gt;prev;
-
-                p = (ngx_slab_page_t *) page-&gt;prev;
-                p-&gt;next = &amp;page[pages];
-                page-&gt;next-&gt;prev = (uintptr_t) &amp;page[pages];
-
-            } else {
-                /* 剩下连续的pages正好够用 */
-                p = (ngx_slab_page_t *) page-&gt;prev;
-                p-&gt;next = page-&gt;next;
-                page-&gt;next-&gt;prev = page-&gt;prev;
-            }
-
-            page-&gt;slab = pages | NGX_SLAB_PAGE_START;
-            page-&gt;next = NULL;
-            page-&gt;prev = NGX_SLAB_PAGE;
-
-            /* 如果只需要分配一个页，则直接返回 */
-            if (--pages == 0) {
-                return page;
-            }
-
-            /* 否则将剩下所需要的页设置占用标记 */
-            for (p = page + 1; pages; pages--) {
-                p-&gt;slab = NGX_SLAB_PAGE_BUSY;
-                p-&gt;next = NULL;
-                p-&gt;prev = NGX_SLAB_PAGE;
-                p++;
-            }
-
-            return page;
-        }
-    }
-
-    ngx_slab_error(pool, NGX_LOG_CRIT, "ngx_slab_alloc() failed: no memory");
-
-    return NULL;
-}
-</code></pre>
-
-<p>从上面的代码中我们可以看到，在空闲页中<code>p-&gt;slab</code>用于标记剩下连续，连接页的第一个页会设置这个值。所以在slab初始化之后，第一个页的slab被赋值为所有页的数量。在使用过程中，由于经常alloc与free，会造成连续空闲页变得断断续续，当没有连续的所需要的空闲页进行分配时，就会出现内存无法分配的问题。所以，使用slab进行大内存分配时，就会出现内存无法分配的现象。所以，我们在使用中，应该避免使用slab进行大内存的分配。</p>
-]]></content>
-  </entry>
+<span class="categories">
   
-  <entry>
-    <title type="html"><![CDATA[nginx源码分析之变量]]></title>
-    <link href="http://www.lifeibo.com/blog/2011/12/17/nginx-varibles.html"/>
-    <updated>2011-12-17T18:51:00+08:00</updated>
-    <id>http://www.lifeibo.com/blog/2011/12/17/nginx-varibles</id>
-    <content type="html"><![CDATA[<p>nginx中的变量在nginx中的使用非常的多，正因为变量的存在，使得nginx在配置上变得非常灵活。</p>
+    <a class='category' href='/blog/categories/nginx/'>nginx</a>
+  
+</span>
+
+
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">lifeibo</span></span>
+
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>nginx中的变量在nginx中的使用非常的多，正因为变量的存在，使得nginx在配置上变得非常灵活。</p>
 
 <p>我们知道，在nginx的配置文件中，配合变量，我们可以动态的得到我们想要的值。最常见的使用是，我们在写<code>access_log</code>的格式时，需要用到多很多变量。
 而这些变量是如何工作的呢？我们可以输出哪些变量？我们又怎么才能输出自己想要的内容呢？当然，我们可能还想知道，如何在我们的模块里面去使用变量，如何添加变量，获取变量的值，以及设置变量的内容？如何使用，以及需要注意些什么？</p>
@@ -393,7 +376,179 @@ ngx_http_get_flushed_variable(ngx_http_request_t *r, ngx_uint_t index)
 <p>至此，变量的整个流程差不多就完了，另外还有一个要注意的是，在创建子请求时候的变量。在<code>ngx_http_subrequest</code>函数中，我们可以看到，子请求的variables是直接指向父请求的variables数组的，所以子请求与父请求是共享variables数组的，这样父子请求就可以传递变量的值。但正因为如此，我们在使用父子请求的时候会产生一些问题，如果一个父请求创建多个子请求，他们之间获取同一个变量时，会有很明显的干扰，因为每个请求的环境是不一样的，这样获取的值也是不一样的。</p>
 
 <p>好吧，变量也简单的介绍了一下。</p>
-]]></content>
-  </entry>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
   
-</feed>
+
+<span class="byline author vcard">Posted by <span class="fn">lifeibo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-12-17T18:51:00+08:00" pubdate data-updated="true">Dec 17<span>th</span>, 2011</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/nginx/'>nginx</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2011/09/09/port-reuse.html" title="Previous Post: 端口重用引发的悲剧">&laquo; 端口重用引发的悲剧</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2012/12/19/slab-usage-alloc-larger-memory.html" title="Next Post: nginx中slab分配大内存的陷阱">nginx中slab分配大内存的陷阱 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li class='category'><a href='/blog/categories/http/'>http (1)</a></li>
+<li class='category'><a href='/blog/categories/linux/'>linux (2)</a></li>
+<li class='category'><a href='/blog/categories/nginx/'>nginx (2)</a></li>
+</ul>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/12/19/slab-usage-alloc-larger-memory.html">nginx中slab分配大内存的陷阱</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/12/17/nginx-varibles.html">nginx源码分析之变量</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/09/09/port-reuse.html">端口重用引发的悲剧</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/08/29/net-work.html">统计网卡流量</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/07/07/200-long-connection.html">http长连接200万尝试及调优</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+<p>
+<a id="hover_pop" href="http://weibo.com/lifeibo"  wb_user_id="1742220335" >淘李子@Weibo<span id="wb_follow_btn"> </a>
+    </p>
+    <script src="http://tjs.sjs.sinajs.cn/open/api/js/wb.js?appkey=1166443256" type="text/javascript"> </script>
+    <script type="text/javascript">
+        WB2.anyWhere(function(W){
+                W.widget.hoverCard({
+id: "hover_pop"
+});
+
+
+                W.widget.followButton({
+uid: '1742220335',
+id: "淘李子"
+});
+                });
+
+</script>
+</section>
+<section>
+  <h1>Friends links</h1>
+  <ul>
+      <li><a href="http://blog.yufeng.info/?from=lizi" title="erlang非业余研究" target="_blank">erlang非业余研究</a></li>
+      <li><a href="http://zhuzhaoyuan.com/?from=lizi" title="叔度个人博客">叔度个人博客</a></li>
+      <li><a href="http://www.imagerabit.com/?from=lizi" title="图像兔" target="_blank">图像兔</a></li>
+      <li><a href="http://rdc.taobao.com/blog/cs/?from=lizi" title="淘宝核心系统博客" target="_blank">淘宝核心系统博客</a></li>
+      <li><a href="http://www.dutor.net/?from=lizi" title="甘雨妹纸的博客">甘雨妹纸</a></li>
+      <li><a href="http://www.pagefault.info/?from=lizi" title="雕梁nginx和内核" target="_blank">雕梁nginx和内核</a></li>
+      <li><a href="http://yzprofile.me/?from=lizi" title="袁茁的小空间" target="_blank">袁茁的空间</a></li>
+  </ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - lifeibo -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+<script src="/javascripts/highlight.js"></script>
+<script type="text/javascript">
+    hljs.tabReplace = '<span class="indent">\t</span>';
+    hljs.initHighlightingOnLoad();
+</script>
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'lifeibo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.lifeibo.com/blog/2011/12/17/nginx-varibles.html';
+        var disqus_url = 'http://www.lifeibo.com/blog/2011/12/17/nginx-varibles.html';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
