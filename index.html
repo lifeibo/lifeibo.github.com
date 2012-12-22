@@ -22,6 +22,7 @@
   <link rel="canonical" href="http://www.lifeibo.com/index.html">
   <link href="/favicon.ico" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/highlight/googlecode.css" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
   <script src="/javascripts/ender.js"></script>
   <script src="/javascripts/octopress.js" type="text/javascript"></script>
@@ -127,7 +128,7 @@ ngx_slab_alloc_locked(ngx_slab_pool_t *pool, size_t size)
     if (size &gt;= ngx_slab_max_size) {
 
         ngx_log_debug1(NGX_LOG_DEBUG_ALLOC, ngx_cycle-&gt;log, 0,
-                "slab alloc: %uz", size);
+                       "slab alloc: %uz", size);
 
         /* 直接分配页 */
         page = ngx_slab_alloc_pages(pool, (size + ngx_pagesize - 1)
@@ -226,6 +227,11 @@ id: "淘李子"
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 
+<script src="/javascripts/highlight.js"></script>
+<script type="text/javascript">
+    hljs.tabReplace = '<span class="indent">\t</span>';
+    hljs.initHighlightingOnLoad();
+</script>
 </footer>
   
 
