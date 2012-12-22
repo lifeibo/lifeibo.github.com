@@ -1,7 +1,9 @@
 article {
   margin:0 0 10px 0;
-  background: $main-bg $noise-bg;
+//   background: $main-bg $noise-bg;
   padding-top: 1em;
+  background: $img-icon no-repeat -89px -617px white;
+  border:1px solid #b6b6b6;
   a { @extend .force-wrap; }
   header {
     position: relative;

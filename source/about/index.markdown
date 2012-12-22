@@ -6,4 +6,4 @@ comments: false
 sharing: false
 footer: false
 ---
-Sample!
+开始于nginx高性能网络服务器的开发，成长中的小伙。lifeibo382005@gmail.com。

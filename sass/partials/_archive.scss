@@ -4,6 +4,7 @@
 #blog-archives {
   article {
     padding: 1em 0 1em;
+    border:none;
     position: relative;
     background: $img-border bottom left repeat-x;
     &:last-child {
