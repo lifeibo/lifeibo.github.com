@@ -1,0 +1,51 @@
+---
+layout: post
+title: "统计网卡流量"
+date: 2011-8-29 17:57
+comments: true
+categories: linux
+---
+
+显示网卡流量的方法蛮多，一般我们可以通过dstat来查看，但dstat不一定所有的机器都有安装。而我们知道，通过ifconfig可以看到某一网卡发送与接收的字节数，所以我们可以写一个脚本来统计一下。
+
+先看ifconfig:
+
+    $ ifconfig eth0  
+    eth0      Link encap:Ethernet  HWaddr A4:BA:DB:43:BA:B1  
+              inet addr:10.232.4.34  Bcast:10.232.4.255  Mask:255.255.255.0  
+              inet6 addr: fe80::a6ba:dbff:fe43:bab1/64 Scope:Link  
+              UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1  
+              RX packets:301707081 errors:0 dropped:1346358 overruns:0 frame:0  
+              TX packets:296718885 errors:0 dropped:0 overruns:0 carrier:0  
+              collisions:0 txqueuelen:1000  
+              RX bytes:28485042645 (26.5 GiB)  TX bytes:35887266717 (33.4 GiB)  
+              Interrupt:98 Memory:d6000000-d6012800  
+
+我们可以看到rx与tx两个数据，于是我们的脚本出来了：
+
+    #!/bin/bash
+    alias ifconfig="/sbin/ifconfig"
+    eth=eth0
+    while true; do
+    RXpre=$(ifconfig ${eth} | grep bytes | awk '{print $2}'| awk -F":" '{print $2}')
+    TXpre=$(ifconfig ${eth} | grep bytes | awk '{print $6}' | awk -F":" '{print $2}')
+    sleep 1
+    RXnext=$(ifconfig ${eth} | grep bytes | awk '{print $2}'| awk -F":" '{print $2}')
+    TXnext=$(ifconfig ${eth} | grep bytes | awk '{print $6}' | awk -F":" '{print $2}')
+    echo RX ----- TX
+    echo "$((((${RXnext}-${RXpre})/1024)/1024))MB/s $((((${TXnext}-${TXpre})/1024/1024)))MB/s"
+    done
+
+脚本暂时比较简单，可以添加一些参数判断，比如多长时间显示一次等等，先看看执行结果:
+
+    $ ./a  
+    RX ----- TX  
+    5MB/s 7MB/s  
+    RX ----- TX  
+    5MB/s 7MB/s  
+    RX ----- TX  
+    4MB/s 6MB/s  
+    RX ----- TX  
+    4MB/s 6MB/s  
+    RX ----- TX  
+

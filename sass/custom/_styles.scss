@@ -1,21 +1,35 @@
 // This File is imported last, and will override other styles in the cascade
 // Add styles here to make changes without digging in too much
 
+.categories a {
+    color: #2F63B3;
+    text-decoration: none;
+    outline-style: none;
+    cursor: auto;
+}
 
-// pre {
-//     padding: 0px 24px;
-//     max-width: 800px;
-//     white-space: pre-wrap;
-//     border: 1px dotted #785;
-//     background: #f5f5f5; 
-//     font-size: 12px;
-//     font-family: "Courier New",monospace; 
-// }
+.categories a:hover {
+    color: #0040FF;
+    text-decoration: underline;
+}
 
+.meta a {
+    color: #2F63B3;
+    text-decoration: none;
+    outline-style: none;
+    cursor: auto;
+}
 
-// code {
-//     font-family: "Courier New",monospace;
-//     color:#0000ff;      
-//     font-size: 11px;
-//     line-height: 14px;
-// }
+.meta a:hover {
+    color: #0040FF;
+    text-decoration: underline;
+}
+
+.entry-content ol {
+    padding-left: 20px;
+}
+
+#content > div > article, body #content > div > section {
+    padding-left: 0px;
+    padding-right: 0px;
+}
