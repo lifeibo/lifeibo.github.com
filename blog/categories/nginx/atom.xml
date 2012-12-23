@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: nginx | 李子的博客]]></title>
-  <link href="http://www.lifeibo.com/blog/categories/nginx/atom.xml" rel="self"/>
-  <link href="http://www.lifeibo.com/"/>
-  <updated>2012-12-23T14:27:09+08:00</updated>
-  <id>http://www.lifeibo.com/</id>
+  <link href="http://blog.lifeibo.com/blog/categories/nginx/atom.xml" rel="self"/>
+  <link href="http://blog.lifeibo.com/"/>
+  <updated>2012-12-23T14:36:29+08:00</updated>
+  <id>http://blog.lifeibo.com/</id>
   <author>
     <name><![CDATA[lifeibo]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[nginx中slab分配大内存的陷阱]]></title>
-    <link href="http://www.lifeibo.com/blog/2012/12/19/slab-usage-alloc-larger-memory.html"/>
+    <link href="http://blog.lifeibo.com/blog/2012/12/19/slab-usage-alloc-larger-memory.html"/>
     <updated>2012-12-19T17:57:00+08:00</updated>
-    <id>http://www.lifeibo.com/blog/2012/12/19/slab-usage-alloc-larger-memory</id>
+    <id>http://blog.lifeibo.com/blog/2012/12/19/slab-usage-alloc-larger-memory</id>
     <content type="html"><![CDATA[<p>我们在开发nginx模块时，需要很小心，nginx里面有很多陷阱是我们需要注意的。之前有人提到过slab分配器在使用时，不适合大内存分配，否则会出现分配不出内存的现象。</p>
 
 <p>nginx一般使用slab来管理共享内存，在程序启动时，很分配好需要共享的内存，然后使用slab来进行初始化，之后就交给slab来管理这段内存。slab的源码分析与合适，在我之前的博客里面有分析过。这次我们针对性的看看，为什么会出现分配不出内存的现象。</p>
@@ -122,9 +122,9 @@ ngx_slab_alloc_pages(ngx_slab_pool_t *pool, ngx_uint_t pages)
   
   <entry>
     <title type="html"><![CDATA[nginx源码分析之变量]]></title>
-    <link href="http://www.lifeibo.com/blog/2011/12/17/nginx-varibles.html"/>
+    <link href="http://blog.lifeibo.com/blog/2011/12/17/nginx-varibles.html"/>
     <updated>2011-12-17T18:51:00+08:00</updated>
-    <id>http://www.lifeibo.com/blog/2011/12/17/nginx-varibles</id>
+    <id>http://blog.lifeibo.com/blog/2011/12/17/nginx-varibles</id>
     <content type="html"><![CDATA[<p>nginx中的变量在nginx中的使用非常的多，正因为变量的存在，使得nginx在配置上变得非常灵活。</p>
 
 <p>我们知道，在nginx的配置文件中，配合变量，我们可以动态的得到我们想要的值。最常见的使用是，我们在写<code>access_log</code>的格式时，需要用到多很多变量。

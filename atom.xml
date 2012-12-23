@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[李子的博客]]></title>
-  <link href="http://www.lifeibo.com/atom.xml" rel="self"/>
-  <link href="http://www.lifeibo.com/"/>
-  <updated>2012-12-23T14:27:09+08:00</updated>
-  <id>http://www.lifeibo.com/</id>
+  <link href="http://blog.lifeibo.com/atom.xml" rel="self"/>
+  <link href="http://blog.lifeibo.com/"/>
+  <updated>2012-12-23T14:36:29+08:00</updated>
+  <id>http://blog.lifeibo.com/</id>
   <author>
     <name><![CDATA[lifeibo]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[nginx中slab分配大内存的陷阱]]></title>
-    <link href="http://www.lifeibo.com/blog/2012/12/19/slab-usage-alloc-larger-memory.html"/>
+    <link href="http://blog.lifeibo.com/blog/2012/12/19/slab-usage-alloc-larger-memory.html"/>
     <updated>2012-12-19T17:57:00+08:00</updated>
-    <id>http://www.lifeibo.com/blog/2012/12/19/slab-usage-alloc-larger-memory</id>
+    <id>http://blog.lifeibo.com/blog/2012/12/19/slab-usage-alloc-larger-memory</id>
     <content type="html"><![CDATA[<p>我们在开发nginx模块时，需要很小心，nginx里面有很多陷阱是我们需要注意的。之前有人提到过slab分配器在使用时，不适合大内存分配，否则会出现分配不出内存的现象。</p>
 
 <p>nginx一般使用slab来管理共享内存，在程序启动时，很分配好需要共享的内存，然后使用slab来进行初始化，之后就交给slab来管理这段内存。slab的源码分析与合适，在我之前的博客里面有分析过。这次我们针对性的看看，为什么会出现分配不出内存的现象。</p>
@@ -122,9 +122,9 @@ ngx_slab_alloc_pages(ngx_slab_pool_t *pool, ngx_uint_t pages)
   
   <entry>
     <title type="html"><![CDATA[nginx源码分析之变量]]></title>
-    <link href="http://www.lifeibo.com/blog/2011/12/17/nginx-varibles.html"/>
+    <link href="http://blog.lifeibo.com/blog/2011/12/17/nginx-varibles.html"/>
     <updated>2011-12-17T18:51:00+08:00</updated>
-    <id>http://www.lifeibo.com/blog/2011/12/17/nginx-varibles</id>
+    <id>http://blog.lifeibo.com/blog/2011/12/17/nginx-varibles</id>
     <content type="html"><![CDATA[<p>nginx中的变量在nginx中的使用非常的多，正因为变量的存在，使得nginx在配置上变得非常灵活。</p>
 
 <p>我们知道，在nginx的配置文件中，配合变量，我们可以动态的得到我们想要的值。最常见的使用是，我们在写<code>access_log</code>的格式时，需要用到多很多变量。
@@ -398,9 +398,9 @@ ngx_http_get_flushed_variable(ngx_http_request_t *r, ngx_uint_t index)
   
   <entry>
     <title type="html"><![CDATA[端口重用引发的悲剧]]></title>
-    <link href="http://www.lifeibo.com/blog/2011/09/09/port-reuse.html"/>
+    <link href="http://blog.lifeibo.com/blog/2011/09/09/port-reuse.html"/>
     <updated>2011-09-09T17:57:00+08:00</updated>
-    <id>http://www.lifeibo.com/blog/2011/09/09/port-reuse</id>
+    <id>http://blog.lifeibo.com/blog/2011/09/09/port-reuse</id>
     <content type="html"><![CDATA[<p>最近做个性能测试，需要在一台机器上启动很多客户端，连接到同一台服务器，我在一台机器上启动了六万个连接，于是，端口被占用完了。按照我的理解，因为我作用端口是作为客户端，应该不会影响到其它进程，于是我放心大胆地去做测试，结果就引发了悲剧。有服务器程序要用到5191端口，却显示端口被占用了，lsof看了下，居然只有我的进程占用了，完全颠覆我的惯性思想。服务端与客户端都有打开<code>SO_REUSEADDR</code>。</p>
 
 <p>我们先来看看<code>SO_REUSEADDR</code>的说明：</p>
@@ -432,9 +432,9 @@ ket绑定的ip地址不同。这和2很相似，区别请看UNPv1。
   
   <entry>
     <title type="html"><![CDATA[统计网卡流量]]></title>
-    <link href="http://www.lifeibo.com/blog/2011/08/29/net-work.html"/>
+    <link href="http://blog.lifeibo.com/blog/2011/08/29/net-work.html"/>
     <updated>2011-08-29T17:57:00+08:00</updated>
-    <id>http://www.lifeibo.com/blog/2011/08/29/net-work</id>
+    <id>http://blog.lifeibo.com/blog/2011/08/29/net-work</id>
     <content type="html"><![CDATA[<p>显示网卡流量的方法蛮多，一般我们可以通过dstat来查看，但dstat不一定所有的机器都有安装。而我们知道，通过ifconfig可以看到某一网卡发送与接收的字节数，所以我们可以写一个脚本来统计一下。</p>
 
 <p>先看ifconfig:</p>
@@ -485,9 +485,9 @@ RX ----- TX
   
   <entry>
     <title type="html"><![CDATA[http长连接200万尝试及调优]]></title>
-    <link href="http://www.lifeibo.com/blog/2011/07/07/200-long-connection.html"/>
+    <link href="http://blog.lifeibo.com/blog/2011/07/07/200-long-connection.html"/>
     <updated>2011-07-07T17:57:00+08:00</updated>
-    <id>http://www.lifeibo.com/blog/2011/07/07/200-long-connection</id>
+    <id>http://blog.lifeibo.com/blog/2011/07/07/200-long-connection</id>
     <content type="html"><![CDATA[<p>对于一个server，我们一般考虑他所能支撑的qps，但有那么一种应用， 我们需要关注的是它能支撑的连接数个数，而并非qps，当然qps也是我们需要考虑的性能点之一。这种应用常见于消息推送系统，也称为comet应用，比如聊天室或即时消息推送系统等。comet应用具体可见我之前的介绍，在此不多讲。对于这类系统，因为很多消息需要到产生时才推送给客户端，所以当没有消息产生时，就需要hold住客户端的连接，这样，当有大量的客户端时，就需要hold住大量的连接，这种连接我们称为长连接。</p>
 
 <p>首先，我们分析一下，对于这类服务，需消耗的系统资源有：cpu、网络、内存。所以，想让系统性能达到最佳，我们先找到系统的瓶颈所在。这样的长连接，往往我们是没有数据发送的，所以也可以看作为非活动连接。对于系统来说，这种非活动连接，并不占用cpu与网络资源，而仅仅占用系统的内存而已。所以，我们假想，只要系统内存足够，系统就能够支持我们想达到的连接数，那么事实是否真的如此？如果真能这样，内核来维护这相当大的数据结构，也是一种考验。</p>
@@ -578,9 +578,9 @@ admin    hard    nofile  2000000
 <p>为了使内存占用尽量减少，我将Nginx的request_pool_size从默认的4k改成1k了。另外，net.ipv4.tcp_wmem与net.ipv4.tcp_rmem中的默认值也设置成4k。</p>
 
 <p>两百万连接时，通过nginx的监控得到数据：<br/>
-<img src="http://www.lifeibo.com/wp-content/uploads/2011/07/abc.jpg" alt="data" /><br/>
+<img src="http://blog.lifeibo.com/wp-content/uploads/2011/07/abc.jpg" alt="data" /><br/>
 两百万连接时系统内存情况：<br/>
-<img src="http://www.lifeibo.com/wp-content/uploads/2011/07/2.png" alt="mem" /></p>
+<img src="http://blog.lifeibo.com/wp-content/uploads/2011/07/2.png" alt="mem" /></p>
 ]]></content>
   </entry>
   
