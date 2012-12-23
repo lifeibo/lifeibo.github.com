@@ -46,7 +46,7 @@ titlecase: true       # Converts page and post titles to titlecase
 
 # list each of the sidebar modules you want to include, in the order you want them to appear.
 # To add custom asides, create files in /source/_includes/custom/asides/ and add them to the list like 'custom/asides/custom_aside_name.html'
-default_asides: [custom/asides/category_list.html, asides/recent_posts.html, asides/github.html, asides/weibo.html, custom/asides/link_list.html]
+default_asides: [custom/asides/category_list.html, asides/recent_posts.html, asides/weibo.html, custom/asides/link_list.html]
 
 # Each layout uses the default asides, but they can have their own asides instead. Simply uncomment the lines below
 # and add an array with the asides you want to use.
@@ -94,10 +94,7 @@ disqus_short_name: lifeibo
 disqus_show_comment_count: false
 
 # Google Analytics
-google_analytics_tracking_id: 42954004
+google_analytics_tracking_id: UA-21744925-1
 
 # Facebook Like
 facebook_like: false
-
-weibo_user: 淘李子
-weibo_userid: 1742220335

@@ -1,20 +1,10 @@
-<section>
-<p>
-<a id="hover_pop" href="http://weibo.com/lifeibo"  wb_user_id="1742220335" >淘李子@Weibo<span id="wb_follow_btn"> </a>
-    </p>
-    <script src="http://tjs.sjs.sinajs.cn/open/api/js/wb.js?appkey=1166443256" type="text/javascript"> </script>
-    <script type="text/javascript">
-        WB2.anyWhere(function(W){
-                W.widget.hoverCard({
-id: "hover_pop"
-});
-
-
-                W.widget.followButton({
-uid: '1742220335',
-id: "淘李子"
-});
-                });
-
-</script>
-</section>
+{% if site.weibo_uid %}  
+<section>  
+<h1>weibo</h1>  
+<ul id="weibo">  
+    <li>  
+    <iframe width="100%" height="87" class="share_self"  frameborder="0" scrolling="no" src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&fansRow=1&ptype=1&speed=0&skin=1&isTitle=0&noborder=1&isWeibo=0&isFans=0&uid=1742220335&verifier=67bab3fd&dpc=0"></iframe>
+    </li>  
+</ul>  
+</section>  
+{% endif %}  
