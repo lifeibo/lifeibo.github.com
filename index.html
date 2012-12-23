@@ -85,6 +85,71 @@
       
   <header>
     
+      <h1 class="entry-title"><a href="/blog/2012/12/23/vim-sub.html">Vim字符串替换</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-12-23T21:05:00+08:00" pubdate data-updated="true">Dec 23<span>rd</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/vim/'>vim</a>
+  
+</span>
+
+
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">lifeibo</span></span>
+
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>经常使用vim进行字符串替换，每次却只使用全量替换，特地总结一下常用的几个替换字符串的使用。</p>
+
+<pre><code>当前行进行替换
+:s/abc/efg/
+:s/abc/efg/g
+
+所有行进行替换
+:%s/abc/efg/
+:%s/abc/efg/g
+
+从第n行开始向下的所有行进行替换，当n为"."时，表示从当前行开始
+:n,$s/abc/efg/
+:n,$s/abc/efg/g
+</code></pre>
+
+<p>上面命令中，最后没有g表示只替换一行中第一次出现的字符串abc为efg。而后面带g的表示当前行的所有abc替换efg。</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
       <h1 class="entry-title"><a href="/blog/2012/12/19/slab-usage-alloc-larger-memory.html">Nginx中slab分配大内存的陷阱</a></h1>
     
     
@@ -580,11 +645,16 @@ admin    hard    nofile  2000000
     <ul id="category-list"><li class='category'><a href='/blog/categories/http/'>http (1)</a></li>
 <li class='category'><a href='/blog/categories/linux/'>linux (2)</a></li>
 <li class='category'><a href='/blog/categories/nginx/'>nginx (2)</a></li>
+<li class='category'><a href='/blog/categories/vim/'>vim (1)</a></li>
 </ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/12/23/vim-sub.html">vim字符串替换</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2012/12/19/slab-usage-alloc-larger-memory.html">nginx中slab分配大内存的陷阱</a>
@@ -600,10 +670,6 @@ admin    hard    nofile  2000000
     
       <li class="post">
         <a href="/blog/2011/08/29/net-work.html">统计网卡流量</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2011/07/07/200-long-connection.html">http长连接200万尝试及调优</a>
       </li>
     
   </ul>
