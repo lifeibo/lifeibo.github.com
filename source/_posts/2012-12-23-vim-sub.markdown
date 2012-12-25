@@ -4,6 +4,7 @@ title: "vim字符串替换"
 date: 2012-12-23 21:05
 comments: true
 categories: vim
+keywords: vim, 字符串替换
 ---
 
 经常使用vim进行字符串替换，每次却只使用全量替换，特地总结一下常用的几个替换字符串的使用。

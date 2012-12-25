@@ -4,6 +4,7 @@ title: "统计网卡流量"
 date: 2011-8-29 17:57
 comments: true
 categories: linux
+keywords: net, tools
 ---
 
 显示网卡流量的方法蛮多，一般我们可以通过dstat来查看，但dstat不一定所有的机器都有安装。而我们知道，通过ifconfig可以看到某一网卡发送与接收的字节数，所以我们可以写一个脚本来统计一下。

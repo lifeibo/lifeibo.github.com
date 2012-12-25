@@ -4,6 +4,7 @@ title: "nginx中slab分配大内存的陷阱"
 date: 2012-12-19 17:57
 comments: true
 categories: nginx
+keywords: nginx, slab, 源码, 内存
 ---
 
 

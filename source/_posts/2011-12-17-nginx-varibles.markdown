@@ -4,6 +4,7 @@ title: "nginx源码分析之变量"
 date: 2011-12-17 18:51
 comments: true
 categories: nginx
+keywords: nginx variables, 变量, nginx 源码分析
 ---
 
 nginx中的变量在nginx中的使用非常的多，正因为变量的存在，使得nginx在配置上变得非常灵活。

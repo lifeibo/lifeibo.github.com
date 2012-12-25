@@ -6,4 +6,4 @@ comments: false
 sharing: false
 footer: false
 ---
-开始于nginx高性能网络服务器的开发，成长中的小伙。lifeibo382005@gmail.com。
+关注高性能网络服务器，关键C200k。lifeibo382005@gmail.com。

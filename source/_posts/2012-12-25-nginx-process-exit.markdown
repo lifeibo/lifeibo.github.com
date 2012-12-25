@@ -4,6 +4,7 @@ title: "nginx问题定位之监控进程异常退出"
 date: 2012-12-25 14:33
 comments: true
 categories: nginx
+keywords: nginx, 进程退出, 异常
 ---
 
 nginx在运行过程中是否稳定，是否有异常退出过？这里总结几项平时会用到的小技巧。
