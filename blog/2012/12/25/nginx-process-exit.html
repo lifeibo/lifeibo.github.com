@@ -9,7 +9,7 @@
   <meta name="author" content="lifeibo">
 
   
-  <meta name="description" content="nginx在运行过程中是否稳定，是否有异常退出过？这里总结几项平时会用到的小技巧。 在error.log中查看是否有signal项，如果有，看看signal是多少。 比如，这是一个异常退出的情况： $grep signal error.log 2012/12/24 16:39:56 [alert &hellip;">
+  <meta name="description" content="nginx在运行过程中是否稳定，是否有异常退出过？这里总结几项平时会用到的小技巧。 1. 在error.log中查看是否有signal项，如果有，看看signal是多少。 比如，这是一个异常退出的情况： $grep signal error.log 2012/12/24 16:39:56 [ &hellip;">
   
 <meta name="keywords" content="李飞勃 nginx 网络 源码 学习 lifeibo push comet Linux Apache">
 
@@ -121,10 +121,7 @@
 
 <div class="entry-content"><p>nginx在运行过程中是否稳定，是否有异常退出过？这里总结几项平时会用到的小技巧。</p>
 
-<ol>
-<li>在error.log中查看是否有signal项，如果有，看看signal是多少。</li>
-</ol>
-
+<p><strong>1. 在error.log中查看是否有signal项，如果有，看看signal是多少。</strong></p>
 
 <p>比如，这是一个异常退出的情况：</p>
 
@@ -140,10 +137,7 @@
 2012/12/24 16:39:56 [alert] 13661#0: worker process 13666 exited on signal 11 (core dumped) 
 </code></pre>
 
-<ol>
-<li>简单方式，看进程号是否连续</li>
-</ol>
-
+<p><strong>2. 简单方式，看进程号是否连续</strong></p>
 
 <p>一般来说，在worker进程启动时，其进程号都是连续的（至少相差不是很远），如果有进程退出，其进程号就不一定连续。</p>
 
@@ -176,10 +170,7 @@ nobody    25447 16659 28 07:41 ?        01:43:56 nginx: worker process
 
 <p>进程号已不再连续，说明nginx可能有工作进程异常退出。</p>
 
-<ol>
-<li>查看dmesg系统消息。</li>
-</ol>
-
+<p><strong>3. 查看dmesg系统消息。</strong></p>
 
 <p>在man手册里面是这么描述dmesg的：</p>
 
@@ -198,10 +189,7 @@ nginx[22002]: segfault at ffffffffffffffff rip 000000001c959744 rsp 00007fff43ca
 
 <p>rip表示程序退出时的ip寄存器内容，当没有core文件可用时，可根据此值以及反汇编来查找程序core的位置。</p>
 
-<ol>
-<li>打开coredump文件。</li>
-</ol>
-
+<p><strong>4. 打开coredump文件。</strong></p>
 
 <p>一般我们在程序启动前，通过<code>ulimit -c ulimited</code>来设置core文件的大小，也可以修改<code>/etc/security/limits.conf</code>文件，添加如下信息：</p>
 
