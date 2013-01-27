@@ -5,12 +5,13 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>统计网卡流量 - 李子的博客</title>
+  <title>ngx_lua与go高并发性能对比 - 李子的博客</title>
   <meta name="author" content="lifeibo">
 
   
-  <meta name="description" content="显示网卡流量的方法蛮多，一般我们可以通过dstat来查看，但dstat不一定所有的机器都有安装。而我们知道，通过ifconfig可以看到某一网卡发送与接收的字节数，所以我们可以写一个脚本来统计一下。 先看ifconfig: $ ifconfig eth0 eth0 Link encap: &hellip;">
-  <meta name="keywords" content="net, tools">
+  <meta name="description" content="nginx在处理高并发能力上非常出色，而go作为新时代互联网语言，在设计之初就为实现高并发。 ngx_lua由nginx来处理网络事件，并使用协程来实现非阻塞，从而实现高并发。
+go语言级别提供非阻塞的api，同样使用协程来提供高并发处理。 我们来测试对比一下两者的性能。 ngx_lua: &hellip;">
+  <meta name="keywords" content="李飞勃 nginx 网络 源码 学习 lifeibo push comet Linux Apache">
 
   <!-- http://t.co/dKP3o1e -->
   <meta name="HandheldFriendly" content="True">
@@ -18,7 +19,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://blog.lifeibo.com/blog/2011/08/29/net-work.html">
+  <link rel="canonical" href="http://blog.lifeibo.com/blog/2013/01/28/ngx-lua-and-go.html">
   <link href="/favicon.ico" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/stylesheets/highlight/github.css" rel="stylesheet" type="text/css">
@@ -81,7 +82,7 @@
   
   <header>
     
-      <h1 class="entry-title">统计网卡流量</h1>
+      <h1 class="entry-title">Ngx_lua与go高并发性能对比</h1>
     
     
       <p class="meta">
@@ -97,12 +98,12 @@
   
 
 
-<time datetime="2011-08-29T17:57:00+08:00" pubdate data-updated="true">Aug 29<span>th</span>, 2011</time>
+<time datetime="2013-01-28T00:46:00+08:00" pubdate data-updated="true">Jan 28<span>th</span>, 2013</time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/linux/'>linux</a>
+    <a class='category' href='/blog/categories/language/'>language</a>
   
 </span>
 
@@ -120,50 +121,119 @@
   </header>
 
 
-<div class="entry-content"><p>显示网卡流量的方法蛮多，一般我们可以通过dstat来查看，但dstat不一定所有的机器都有安装。而我们知道，通过ifconfig可以看到某一网卡发送与接收的字节数，所以我们可以写一个脚本来统计一下。</p>
+<div class="entry-content"><p>nginx在处理高并发能力上非常出色，而go作为新时代互联网语言，在设计之初就为实现高并发。</p>
 
-<p>先看ifconfig:</p>
+<p>ngx_lua由nginx来处理网络事件，并使用协程来实现非阻塞，从而实现高并发。
+go语言级别提供非阻塞的api，同样使用协程来提供高并发处理。</p>
 
-<pre><code>$ ifconfig eth0  
-eth0      Link encap:Ethernet  HWaddr A4:BA:DB:43:BA:B1  
-          inet addr:10.232.4.34  Bcast:10.232.4.255  Mask:255.255.255.0  
-          inet6 addr: fe80::a6ba:dbff:fe43:bab1/64 Scope:Link  
-          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1  
-          RX packets:301707081 errors:0 dropped:1346358 overruns:0 frame:0  
-          TX packets:296718885 errors:0 dropped:0 overruns:0 carrier:0  
-          collisions:0 txqueuelen:1000  
-          RX bytes:28485042645 (26.5 GiB)  TX bytes:35887266717 (33.4 GiB)  
-          Interrupt:98 Memory:d6000000-d6012800  
+<p>我们来测试对比一下两者的性能。</p>
+
+<pre><code>ngx_lua:Tengine/1.4.3+luagit+ngx_lua
+go:go1.0.3
 </code></pre>
 
-<p>我们可以看到rx与tx两个数据，于是我们的脚本出来了：</p>
+<p>分别实现512字节的内容的输出，对比在不同并发下的qps。</p>
 
-<pre><code>#!/bin/bash
-alias ifconfig="/sbin/ifconfig"
-eth=eth0
-while true; do
-RXpre=$(ifconfig ${eth} | grep bytes | awk '{print $2}'| awk -F":" '{print $2}')
-TXpre=$(ifconfig ${eth} | grep bytes | awk '{print $6}' | awk -F":" '{print $2}')
-sleep 1
-RXnext=$(ifconfig ${eth} | grep bytes | awk '{print $2}'| awk -F":" '{print $2}')
-TXnext=$(ifconfig ${eth} | grep bytes | awk '{print $6}' | awk -F":" '{print $2}')
-echo RX ----- TX
-echo "$((((${RXnext}-${RXpre})/1024)/1024))MB/s $((((${TXnext}-${TXpre})/1024/1024)))MB/s"
-done
+<p>测试机器：</p>
+
+<pre><code>16core Intel(R) Xeon(R) CPU E5520  @ 2.27GHz  
+Linux localhost 2.6.18-164.el5 #1 SMP Tue Aug 18 15:51:48 EDT 2009 x86_64 x86_64 x86_64 GNU/Linux
 </code></pre>
 
-<p>脚本暂时比较简单，可以添加一些参数判断，比如多长时间显示一次等等，先看看执行结果:</p>
+<p>使用ab进行测试，测试结果如下：</p>
 
-<pre><code>$ ./a  
-RX ----- TX  
-5MB/s 7MB/s  
-RX ----- TX  
-5MB/s 7MB/s  
-RX ----- TX  
-4MB/s 6MB/s  
-RX ----- TX  
-4MB/s 6MB/s  
-RX ----- TX  
+<table>
+<thead>
+<tr>
+<th>短连接  </th>
+<th> 100                       </th>
+<th> 200   </th>
+<th> 500   </th>
+<th> 1000  </th>
+<th> 2000</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ngx_lua </td>
+<td> qps:17329 us:2.6% sy:2.2% </td>
+<td> 17744 </td>
+<td> 16443 </td>
+<td> 15852 </td>
+<td> 13589</td>
+</tr>
+<tr>
+<td>go      </td>
+<td> qps:16538 us:9.1% sy:3.6% </td>
+<td> 16546 </td>
+<td> 15988 </td>
+<td> 15032 </td>
+<td> 13757</td>
+</tr>
+</tbody>
+</table>
+
+
+<table>
+<thead>
+<tr>
+<th>长连接  </th>
+<th> 100                       </th>
+<th> 200   </th>
+<th> 500</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ngx_lua </td>
+<td> qps:72274 us:13.8% sy:8.5 </td>
+<td> 61204 </td>
+<td> 61983</td>
+</tr>
+<tr>
+<td>go      </td>
+<td> qps:39072 us:29% sy:15%   </td>
+<td> 38688 </td>
+<td> 38238</td>
+</tr>
+</tbody>
+</table>
+
+
+<p><strong>从结果中，可以看出短连接时，两者qps相差不大，而长连接时，两者相差较大。go的cpu占用比ngx_lua要高不少。另外，go在并发数增加的情况下，性能依然出色。</strong></p>
+
+<p>相关测试代码。</p>
+
+<p>lua代码：</p>
+
+<pre><code>ngx.print("aaaaa...512...aaa")
+</code></pre>
+
+<p>go 代码：</p>
+
+<pre><code>package main
+
+import (
+    "net/http"
+    "log"
+    "fmt"
+    "runtime"
+)
+
+func handler512(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Connection", "keep-alive")
+    a := []byte("aaaaa...512...aaa")
+    w.Header().Set("Content-Length", fmt.Sprintf("%d", len(a)))
+    w.Write(a)
+}
+
+func main() {
+    runtime.GOMAXPROCS(runtime.NumCPU())
+
+    http.HandleFunc("/512b", handler512)
+
+    log.Fatal(http.ListenAndServe(":8080", nil))
+}
 </code></pre>
 </div>
 
@@ -187,12 +257,12 @@ RX ----- TX
   
 
 
-<time datetime="2011-08-29T17:57:00+08:00" pubdate data-updated="true">Aug 29<span>th</span>, 2011</time>
+<time datetime="2013-01-28T00:46:00+08:00" pubdate data-updated="true">Jan 28<span>th</span>, 2013</time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/linux/'>linux</a>
+    <a class='category' href='/blog/categories/language/'>language</a>
   
 </span>
 
@@ -208,10 +278,8 @@ RX ----- TX
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2011/07/07/200-long-connection.html" title="Previous Post: http长连接200万尝试及调优">&laquo; http长连接200万尝试及调优</a>
+        <a class="basic-alignment left" href="/blog/2012/12/25/nginx-process-exit.html" title="Previous Post: nginx问题定位之监控进程异常退出">&laquo; nginx问题定位之监控进程异常退出</a>
       
-      
-        <a class="basic-alignment right" href="/blog/2011/09/09/port-reuse.html" title="Next Post: 端口重用引发的悲剧">端口重用引发的悲剧 &raquo;</a>
       
     </p>
   </footer>
@@ -317,8 +385,8 @@ RX ----- TX
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://blog.lifeibo.com/blog/2011/08/29/net-work.html';
-        var disqus_url = 'http://blog.lifeibo.com/blog/2011/08/29/net-work.html';
+        var disqus_identifier = 'http://blog.lifeibo.com/blog/2013/01/28/ngx-lua-and-go.html';
+        var disqus_url = 'http://blog.lifeibo.com/blog/2013/01/28/ngx-lua-and-go.html';
         var disqus_script = 'embed.js';
       
     (function () {
