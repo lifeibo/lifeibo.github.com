@@ -4,7 +4,7 @@
   <title><![CDATA[Category: language | 李子的博客]]></title>
   <link href="http://blog.lifeibo.com/blog/categories/language/atom.xml" rel="self"/>
   <link href="http://blog.lifeibo.com/"/>
-  <updated>2013-01-28T02:12:16+08:00</updated>
+  <updated>2013-01-28T02:34:12+08:00</updated>
   <id>http://blog.lifeibo.com/</id>
   <author>
     <name><![CDATA[lifeibo]]></name>
@@ -25,7 +25,7 @@ go语言级别提供非阻塞的api，同样使用协程来提供高并发处理
 
 <p>我们来测试对比一下两者的性能。</p>
 
-<pre><code>ngx_lua:Tengine/1.4.3+luagit+ngx_lua
+<pre><code>ngx_lua:Tengine/1.4.3+luajit+ngx_lua
 go:go1.0.3
 </code></pre>
 
