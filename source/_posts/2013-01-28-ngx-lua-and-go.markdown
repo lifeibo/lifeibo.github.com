@@ -13,7 +13,7 @@ go语言级别提供非阻塞的api，同样使用协程来提供高并发处理
 
 我们来测试对比一下两者的性能。
 
-    ngx_lua:Tengine/1.4.3+luagit+ngx_lua
+    ngx_lua:Tengine/1.4.3+luajit+ngx_lua
     go:go1.0.3
 
 分别实现512字节的内容的输出，对比在不同并发下的qps。
