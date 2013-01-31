@@ -1,0 +1,11 @@
+function FindProxyForURL(url, host) {
+    if (shExpMatch(url,"*.google.com/*")) {
+        return "PROXY host.lifeibo.com:8087";
+    }
+
+    if (shExpMatch(url,"*.facebook*")) {
+        return "PROXY host.lifeibo.com:8087";
+    }
+
+    return "DIRECT";
+}
