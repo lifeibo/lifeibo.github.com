@@ -1,0 +1,144 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="full-screen" content="true"/>
+    <meta name="screen-orientation" content="portrait"/>
+    <meta name="x5-fullscreen" content="true"/>
+    <meta name="360-fullscreen" content="true"/>
+<title>围住神经猫-李子版</title>
+<script type="text/javascript" src="/download/mao/jquery.min.js"></script>
+<script type="text/javascript">
+		var _config = {}; _config['isSite'] = 'http://wei.2sky.cn/';_config["isCount"] = "http://wxtj.552200.com/";_config["isSites"] = "http://wei.2sky.cn/";
+</script>
+<style type="text/css">
+ body {
+            text-align: center;
+            background: #000000;
+            padding: 0;
+            border: 0;
+            margin: 0;
+            height: 100%;
+        }
+
+        html {
+            -ms-touch-action: none; /* Direct all pointer events to JavaScript code. */
+        }
+        .sbgshow{display:block;position:fixed;top:0;left:0;width:100%;height:100%;text-align:center;color:#fff;font-size:30px;line-height:1.7em;background:rgba(0,0,0,0.85);}
+        .sbgshow .arron{ position:absolute;top:8px;right:8px;width:100px;height:100px;background:url(/download/mao/arron.png) no-repeat; background-size:100px 100px;}
+        .sbgshow p{padding-top:78px;}
+        .sbg{display:none;position:fixed;top:0;left:0;width:100%;height:100%;text-align:center;color:#fff;font-size:26px;line-height:1.7em;background:rgba(0,0,0,0.85);}
+        .sbg .arron{ position:absolute;top:8px;right:8px;width:100px;height:100px;background:url(/download/mao/arron.png) no-repeat; background-size:100px 100px;}
+        .sbg p{padding-top:78px;}
+
+</style>
+<script type="text/javascript">
+   var document_class = "GameApp";  
+</script>
+</head>
+ <body>
+<!--{-----------------------------------------------}-->
+<script type="text/javascript">
+			var isCount = 1;
+		if(isCount==1){openCount(20);}
+</script>
+
+<div style="display:inline-block;width:100%; height:100%;margin: 0 auto; background: black; position:relative;"
+     id="gameDiv">
+    <canvas id="gameCanvas" width="480" height="800" style="background-color: #000000"></canvas>
+</div>
+<script>var document_class = "GameApp";</script>
+<script src="http://swift.taobao.org/download/mao/egret_loader.js"></script>
+<script src="http://swift.taobao.org/download/mao/game-min-0722.js"></script>
+<script type="text/javascript">
+	var mebtnopenurl = _config["isSites"]+'game/';
+    egret_h5.startGame();
+</script>
+		<div id="share" style="display: none">
+			<img width=100% src="/download/mao/share.png" style="position: fixed;z-index:9999; top: 0; left: 0; display: " ontouchstart="document.getElementById('share').style.display='none';">
+		</div>
+  <!--{-----------------------------------------------}-->
+
+<div id="infos" style="display:none"></div>
+<script language=javascript>
+		var helptime=0;
+		function help(){
+			helptime++;
+			if(helptime==2||helptime==5){
+				if(confirm("是不是被神经猫搞的快神经了？现在给你一次机会，关注6e手机游戏并回复【神经猫怎么过】可以获得攻略，要不要现在就去看看？")){
+					window.location=mebtnopenurl;
+				}
+			}
+		}
+		var myscore=0;
+		function goHome(){
+			window.location=mebtnopenurl;
+		}
+		function dp_share(score){
+			if(score>0){
+				document.title = "我用了"+score+"步围住神经猫，玩过之后我整个人都精神了！你能超过我吗？";
+				var note = "我用了"+score+"步围住神经猫，玩过之后我整个人都精神了！你能超过我吗？";
+			}
+			else{
+				document.title = "围住神经猫-根本停不下来，玩过之后我整个人都精神了！-6e手机游戏";
+				var note = "围住神经猫-根本停不下来，玩过之后我整个人都精神了！-6e手机游戏";
+			}
+			$("#share").show();
+			$("#infos").html(note);
+		}
+		function dp_Ranking(){
+			window.location=mebtnopenurl;
+		}
+		function dp_submitScore(score){
+			myscore=score;
+			if(score<40){
+				if (confirm("你花了"+score+"步围住神经猫！是不是觉得精神多了？")){
+					myCRdata.score = score;
+					myCRdata.scoreName = score+"步";
+					dp_share(score);
+				}
+			}
+		}
+		function showme(){
+			window.location.href=mebtnopenurl;
+		}
+		 function share(n , m){
+			if(m == 0){
+				document.title =  "围住神经猫-根本停不下来，玩过之后我整个人都精神了！";
+			}
+			if(m == 1){
+				document.title =  "我用了"+n+"步围住神经猫，你能超过我吗？";
+			}
+			if(m == 2){
+				document.title =  "我没有围住它，谁能帮个忙？";
+			}
+		   $("#share").show();
+		}
+		function share1(n , m){
+			if(m == 0){
+				document.title =  "围住神经猫-根本停不下来，玩过之后我整个人都精神了！";
+				var note = "围住神经猫-根本停不下来，玩过之后我整个人都精神了！";
+			}
+			if(m == 1){
+				document.title =  "我用了"+n+"步围住神经猫，你能超过我吗？";
+				var note = "我用了"+n+"步围住神经猫，";
+			}
+			if(m == 2){
+				document.title =  "我没有围住它，谁能帮个忙？";
+				var note = "我没有围住它，谁能帮个忙？";
+			}
+		   $("#infos").html(note);
+		}
+
+		</script>
+<div align="center" id="bai" style="overflow: hidden; margin-bottom: 15px;">
+	<div style="display: inline;float: left;">
+			</div>
+</div>
+<div style="display:none;">
+	<script type="text/javascript"> var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://"); document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F4ee8ffdc667ad27d3627c196922331dd' type='text/javascript'%3E%3C/script%3E"));
+</script></div>
+</body>
+</html>
