@@ -11,7 +11,7 @@
 <title>围住神经猫-李子版</title>
 <script type="text/javascript" src="/download/mao/jquery.min.js"></script>
 <script type="text/javascript">
-		var _config = {}; _config['isSite'] = 'http://wei.2sky.cn/';_config["isCount"] = "http://wxtj.552200.com/";_config["isSites"] = "http://wei.2sky.cn/";
+		var _config = {}; _config['isSite'] = 'http://blog.lifeibo.com/';_config["isCount"] = "http://blog.lifeibo.com/";_config["isSites"] = "http://blog.lifeibo.com/";
 </script>
 <style type="text/css">
  body {
@@ -37,6 +37,18 @@
 <script type="text/javascript">
    var document_class = "GameApp";  
 </script>
+<script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-21744925-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+     var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+     ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+     })();
+</script>
+
 </head>
  <body>
 <!--{-----------------------------------------------}-->
@@ -50,10 +62,10 @@
     <canvas id="gameCanvas" width="480" height="800" style="background-color: #000000"></canvas>
 </div>
 <script>var document_class = "GameApp";</script>
-<script src="http://swift.taobao.org/download/mao/egret_loader.js"></script>
-<script src="http://swift.taobao.org/download/mao/game-min-0722.js"></script>
+<script src="/download/mao/egret_loader.js"></script>
+<script src="/download/mao/game-min-0722.js"></script>
 <script type="text/javascript">
-	var mebtnopenurl = _config["isSites"]+'game/';
+	var mebtnopenurl = _config["isSites"]+'/';
     egret_h5.startGame();
 </script>
 		<div id="share" style="display: none">
@@ -67,7 +79,7 @@
 		function help(){
 			helptime++;
 			if(helptime==2||helptime==5){
-				if(confirm("是不是被神经猫搞的快神经了？现在给你一次机会，关注6e手机游戏并回复【神经猫怎么过】可以获得攻略，要不要现在就去看看？")){
+				if(confirm("是不是被神经猫搞的快神经了？")){
 					window.location=mebtnopenurl;
 				}
 			}
@@ -78,12 +90,12 @@
 		}
 		function dp_share(score){
 			if(score>0){
-				document.title = "我用了"+score+"步围住神经猫，玩过之后我整个人都精神了！你能超过我吗？";
-				var note = "我用了"+score+"步围住神经猫，玩过之后我整个人都精神了！你能超过我吗？";
+				document.title = "原来是这样玩的，才用了"+score+"！你敢超过我吗？据说分享有惊喜!";
+				var note = "原来是这样玩的，才用了"+score+"！你敢超过我吗？据说分享有惊喜!";
 			}
 			else{
-				document.title = "围住神经猫-根本停不下来，玩过之后我整个人都精神了！-6e手机游戏";
-				var note = "围住神经猫-根本停不下来，玩过之后我整个人都精神了！-6e手机游戏";
+				document.title = "又失败了，再试一次好！";
+				var note = "又失败了，再试一次好！";
 			}
 			$("#share").show();
 			$("#infos").html(note);
@@ -94,7 +106,7 @@
 		function dp_submitScore(score){
 			myscore=score;
 			if(score<40){
-				if (confirm("你花了"+score+"步围住神经猫！是不是觉得精神多了？")){
+				if (confirm("你花了"+score+"步围住神经猫！是不是觉得精神多了？分享到朋友圈，会有惊喜步骤哦！")){
 					myCRdata.score = score;
 					myCRdata.scoreName = score+"步";
 					dp_share(score);
@@ -106,10 +118,10 @@
 		}
 		 function share(n , m){
 			if(m == 0){
-				document.title =  "围住神经猫-根本停不下来，玩过之后我整个人都精神了！";
+				document.title =  "疯了，停不下来怎么办？";
 			}
 			if(m == 1){
-				document.title =  "我用了"+n+"步围住神经猫，你能超过我吗？";
+				document.title =  "原来是这样玩的，我才用了"+n+"步围住神经猫，你敢超过我吗？据说分享有惊喜!";
 			}
 			if(m == 2){
 				document.title =  "我没有围住它，谁能帮个忙？";
@@ -118,12 +130,12 @@
 		}
 		function share1(n , m){
 			if(m == 0){
-				document.title =  "围住神经猫-根本停不下来，玩过之后我整个人都精神了！";
-				var note = "围住神经猫-根本停不下来，玩过之后我整个人都精神了！";
+				document.title =  "疯了，停不下来怎么办？";
+				var note = "疯了，停不下来怎么办？";
 			}
 			if(m == 1){
-				document.title =  "我用了"+n+"步围住神经猫，你能超过我吗？";
-				var note = "我用了"+n+"步围住神经猫，";
+				document.title =  "原来是这样玩的，我才用了"+n+"步围住神经猫，你敢超过我吗？据说分享有惊喜!";
+				var note = "原来是这样玩的，我才用了"+n+"步围住神经猫，你敢超过我吗？据说分享有惊喜!";
 			}
 			if(m == 2){
 				document.title =  "我没有围住它，谁能帮个忙？";
@@ -133,12 +145,5 @@
 		}
 
 		</script>
-<div align="center" id="bai" style="overflow: hidden; margin-bottom: 15px;">
-	<div style="display: inline;float: left;">
-			</div>
-</div>
-<div style="display:none;">
-	<script type="text/javascript"> var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://"); document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3F4ee8ffdc667ad27d3627c196922331dd' type='text/javascript'%3E%3C/script%3E"));
-</script></div>
 </body>
 </html>
